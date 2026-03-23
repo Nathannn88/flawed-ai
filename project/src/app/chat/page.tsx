@@ -15,7 +15,6 @@ import FamiliarityBar from '@/components/chat/FamiliarityBar';
 import GiftModal from '@/components/chat/GiftModal';
 import EventModal from '@/components/chat/EventModal';
 import IntroFlow from '@/components/intro/IntroFlow';
-import ParticleCanvas from '@/components/landing/ParticleCanvas';
 import dynamic from 'next/dynamic';
 
 const CompanionScene = dynamic(
@@ -82,26 +81,17 @@ function ChatPageInner() {
     });
   }, [loadFromFile]);
 
-  // 根据阶段确定粒子颜色
-  const particleColors: Record<string, string[]> = {
-    intro: ['#00E5A0', '#33EDBA', '#7FF5D5'],
-    acquaintance: ['#00E5A0', '#FFB347', '#FFC870'],
-    familiar: ['#00E5A0', '#FFB347', '#C73E5C'],
-    close: ['#C73E5C', '#E84855', '#FFB347'],
-    bonded: ['#9CA3AF', '#6B7280', '#4B5563'],
-  };
-
   return (
     <div
       className="h-dvh flex flex-col bg-abyss-900 relative overflow-hidden"
       data-phase={character.currentPhase}
     >
-      {/* 背景粒子 */}
-      <ParticleCanvas
-        colors={particleColors[character.currentPhase] || particleColors.intro}
-        count={30}
-        showLines={false}
+      {/* 背景图 */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/bg-haven.png)' }}
       />
+      <div className="absolute inset-0 bg-black/20" />
 
       {/* 环境光 — 阶段变化时平滑过渡 */}
       <div
