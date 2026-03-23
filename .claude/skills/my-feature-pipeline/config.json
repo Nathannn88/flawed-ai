@@ -1,0 +1,18 @@
+{
+  "_comment": "my-feature-pipeline 项目差异化配置",
+  "project_dir": "project",
+  "dev_server_url": "http://localhost:3000",
+  "npm_commands": {
+    "test": "npm test",
+    "lint": "npm run lint",
+    "build": "npm run build",
+    "dev": "npm run dev"
+  },
+  "feature_progress_dir": ".",
+  "key_pages_for_regression": [
+    "/",
+    "/chat"
+  ],
+  "quality_chain": ["/review", "/qa", "/browse"],
+  "auto_push": false
+}

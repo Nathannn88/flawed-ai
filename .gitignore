@@ -40,3 +40,4 @@ Thumbs.db
 
 # Vercel deploy (独立仓库 Nathannn88/flawed-ai-vercel)
 project/vercel-deploy/
+.gstack/
