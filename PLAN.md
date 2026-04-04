@@ -118,7 +118,6 @@ test-engineer（全程跟进）
 
 ## 运行规则
 
-- 迭代上限 50 轮，每阶段完成后 `npm test` → `npm run lint` → `npm run build`
-- 每个 Phase 完成后 git commit
-- 任务反复失败（>3次）→ 跳过并记录到 `progress.md`
+- 每个 Phase 完成后执行 `/check` skill（质量链）并 git commit
+- 任务反复失败（>2次同一问题）→ 用 `/investigate` 定位根因
 - rate limit 暂停等待，刷新后自动恢复

@@ -41,7 +41,9 @@
       "Bash(which *)",
       "Bash(pwd)",
       "Bash(env *)",
-      "Skill(ralph-loop:ralph-loop)"
+      "Skill(ralph-loop:ralph-loop)",
+      "Skill(review)",
+      "Skill(qa)"
     ],
     "deny": []
   },
