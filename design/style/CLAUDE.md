@@ -25,8 +25,12 @@
 1. 告诉 Claude 应用变更到代码
 2. 重点检查 `tailwind.config.ts` 和 `globals.css` 是否同步
 
-## output 文件
+## 设计文稿
 
 - `视觉风格.md` — 核心视觉方向
 - `design-system.md` — 完整视觉设计系统（配色、排版、组件模式）
 - `tailwind-tokens.md` — Tailwind CSS token 定义
+
+## output
+
+加工产出（Claude 按要求生成），代码可直接引用。

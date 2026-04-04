@@ -1,0 +1,14 @@
+filters:
+  and:
+    - file.inFolder("design/system")
+    - 'file.ext == "md"'
+    - '!file.name.contains("MAP")'
+    - '!file.name.contains("CLAUDE")'
+formulas:
+  类型: 'if(file.folder.contains("output"), "📦 产出", "📝 文稿")'
+views:
+  - type: list
+    name: 文件列表
+    order:
+      - file.name
+      - formula.类型

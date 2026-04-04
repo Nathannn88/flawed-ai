@@ -21,7 +21,7 @@ description: "新功能开发全流程流水线。当用户说'新增功能'、'
 
 1. Read `progress.md`
 2. Read `PLAN.md`
-3. Read 相关的 `design/*/output/` 文件（根据功能涉及的领域）
+3. Read 相关的 `design/*/` 设计文稿（根据功能涉及的领域）
 4. Read 本 skill 目录下的 `gotchas.md`
 
 然后进入阶段一。

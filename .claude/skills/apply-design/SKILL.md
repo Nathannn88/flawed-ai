@@ -1,6 +1,6 @@
 ---
 name: apply-design
-description: "设计→代码桥梁。用户在 Obsidian 更新了 design/*/output/ 后触发。读取设计变更，识别影响的代码模块，生成计划并实施。触发词：'读取更新'、'应用设计'、'设计变更'、'apply design'。"
+description: "设计→代码桥梁。用户在 Obsidian 更新了 design/ 设计文稿后触发。读取设计变更，识别影响的代码模块，生成计划并实施。触发词：'读取更新'、'应用设计'、'设计变更'、'apply design'。"
 ---
 
 # /apply-design — 设计→代码桥梁
@@ -36,12 +36,12 @@ git status design/
 
 | 变更的设计文件 | 影响的代码模块 |
 |--------------|--------------|
-| `story/output/世界观.md` | `src/data/prompts/system-prompt.ts`、`src/lib/ending-system.ts` |
-| `story/output/事件剧本.md` | `src/data/prompts/event-prompts.ts`、`src/lib/event-system.ts` |
-| `character/output/诗人设定.md` | `src/data/prompts/system-prompt.ts`、`src/data/prompts/intro-prompt.ts` |
-| `character/output/企鹅设定.md` | `src/lib/penguin-system.ts`、`src/components/companion/` |
-| `style/output/*.md` | `tailwind.config.ts`、`src/app/globals.css`、`src/components/` |
-| `system/output/系统机制.md` | `src/lib/*.ts`（所有系统模块）、`src/types/`、`src/store/` |
+| `story/世界观.md` | `src/data/prompts/system-prompt.ts`、`src/lib/ending-system.ts` |
+| `story/事件剧本.md` | `src/data/prompts/event-prompts.ts`、`src/lib/event-system.ts` |
+| `character/诗人设定.md` | `src/data/prompts/system-prompt.ts`、`src/data/prompts/intro-prompt.ts` |
+| `character/企鹅设定.md` | `src/lib/penguin-system.ts`、`src/components/companion/` |
+| `style/*.md` | `tailwind.config.ts`、`src/app/globals.css`、`src/components/` |
+| `system/系统机制.md` | `src/lib/*.ts`（所有系统模块）、`src/types/`、`src/store/` |
 
 ### 三、生成计划
 

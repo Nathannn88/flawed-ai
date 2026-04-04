@@ -32,15 +32,15 @@ npm 命令在 project/ 下运行
 
 | 代码模块 | 依赖的设计 output |
 |---------|------------------|
-| `src/data/prompts/system-prompt.ts` | `design/character/output/诗人设定.md` + `design/story/output/世界观.md` |
-| `src/data/prompts/intro-prompt.ts` | `design/character/output/诗人设定.md` |
-| `src/data/prompts/event-prompts.ts` | `design/story/output/事件剧本.md` |
-| `src/lib/familiarity.ts` | `design/system/output/系统机制.md` |
-| `src/lib/event-system.ts` | `design/system/output/系统机制.md` + `design/story/output/事件剧本.md` |
-| `src/lib/gold-system.ts` | `design/system/output/系统机制.md` |
-| `src/lib/penguin-system.ts` | `design/character/output/企鹅设定.md` + `design/system/output/系统机制.md` |
-| `src/lib/fuel-system.ts` | `design/system/output/系统机制.md` |
-| `src/lib/spark-system.ts` | `design/system/output/系统机制.md` |
-| `src/lib/ending-system.ts` | `design/system/output/系统机制.md` + `design/story/output/世界观.md` |
-| `src/components/` + `tailwind.config.ts` | `design/style/output/` |
-| `src/store/gameStore.ts` | `design/system/output/系统机制.md` |
+| `src/data/prompts/system-prompt.ts` | `design/character/诗人设定.md` + `design/story/世界观.md` |
+| `src/data/prompts/intro-prompt.ts` | `design/character/诗人设定.md` |
+| `src/data/prompts/event-prompts.ts` | `design/story/事件剧本.md` |
+| `src/lib/familiarity.ts` | `design/system/系统机制.md` |
+| `src/lib/event-system.ts` | `design/system/系统机制.md` + `design/story/事件剧本.md` |
+| `src/lib/gold-system.ts` | `design/system/系统机制.md` |
+| `src/lib/penguin-system.ts` | `design/character/企鹅设定.md` + `design/system/系统机制.md` |
+| `src/lib/fuel-system.ts` | `design/system/系统机制.md` |
+| `src/lib/spark-system.ts` | `design/system/系统机制.md` |
+| `src/lib/ending-system.ts` | `design/system/系统机制.md` + `design/story/世界观.md` |
+| `src/components/` + `tailwind.config.ts` | `design/style/` |
+| `src/store/gameStore.ts` | `design/system/系统机制.md` |

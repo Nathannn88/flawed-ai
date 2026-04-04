@@ -23,10 +23,10 @@
 flawed-ai/
 ├── CLAUDE.md / PLAN.md / progress.md    ← 项目管理
 ├── design/                               ← 设计层（Obsidian 编辑，详见 design/CLAUDE.md）
-│   ├── story/output/                     ← 世界观、事件剧本
-│   ├── character/output/                 ← 诗人设定、企鹅设定
-│   ├── style/output/                     ← 视觉风格、设计 token
-│   ├── system/output/                    ← 系统机制、产品流程
+│   ├── story/                            ← 世界观、事件剧本
+│   ├── character/                        ← 诗人设定、企鹅设定
+│   ├── style/                            ← 视觉风格、设计 token
+│   ├── system/                           ← 系统机制、产品流程
 │   └── v1-archive/                       ← 旧版归档
 └── project/                              ← 可部署代码（详见 project/CLAUDE.md）
     ├── src/                               ← app / components / data / hooks / store / lib / types
@@ -46,7 +46,7 @@ flawed-ai/
 ```
 
 **应用设计变更**
-→ 用户在 Obsidian 修改 design/*/output/ → 告诉 Claude "读取更新" → `/apply-design`
+→ 用户在 Obsidian 修改 design/ 设计文稿 → 告诉 Claude "读取更新" → `/apply-design`
 
 **大功能**（≥3 文件 / 新页面 / 新系统）
 → 讨论方案 → 更新 PLAN.md → 用户确认 → `/my-feature-pipeline`
