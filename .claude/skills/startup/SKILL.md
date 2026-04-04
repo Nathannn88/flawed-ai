@@ -30,17 +30,16 @@ description: "Session 启动检查。每次新开对话时自动执行：读取�
 
 `git status` → 关注未提交改动、当前分支、未跟踪文件。
 
-### 三、扫描资源一致性
+### 三、检测未应用的设计变更
 
-快速对比：
+```bash
+git diff design/
+git log --oneline -5 design/
+```
 
-| 档案馆 (`design/`) | 施工现场 (`project/`) |
-|--------------------|----------------------|
-| `design/背景/` | `project/public/` 中的背景文件 |
-| `design/prompt/` | `project/src/data/prompts/` |
-| `design/UI/` | `project/public/` 中的 UI 素材 |
+检查 `design/*/output/` 是否有未 commit 的修改或最近的 commit 尚未应用到代码。
 
-发现不一致 → 在报告中标出。
+发现未应用变更 → 在报告中标出，建议执行 `/apply-design`。
 
 ### 四、输出状态报告
 

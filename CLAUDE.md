@@ -1,7 +1,6 @@
 # Flawed AI — 有缺陷的AI
 
 > 一个拥有独特人格与完整成长结构的 **AI 诗人应用**。
-> 详细设定见 `project/设计文档/项目圣经.md`（唯一设计来源，不在此文件重复）。
 
 ---
 
@@ -23,35 +22,34 @@
 ```
 flawed-ai/
 ├── CLAUDE.md / PLAN.md / progress.md    ← 项目管理
-├── design/                               ← 设计素材档案馆（/sync-design 管理）
-└── project/                              ← Next.js 代码
-    ├── 设计文档/                          ← 项目圣经 + 角色 + 视觉参考
+├── design/                               ← 设计层（Obsidian 编辑，详见 design/CLAUDE.md）
+│   ├── story/output/                     ← 世界观、事件剧本
+│   ├── character/output/                 ← 诗人设定、企鹅设定
+│   ├── style/output/                     ← 视觉风格、设计 token
+│   ├── system/output/                    ← 系统机制、产品流程
+│   └── v1-archive/                       ← 旧版归档
+└── project/                              ← 可部署代码（详见 project/CLAUDE.md）
     ├── src/                               ← app / components / data / hooks / store / lib / types
     ├── public/                            ← 静态资源
     ├── tests/                             ← 测试
     └── vercel-deploy/v1/                  ← 部署副本（/deploy 管理）
 ```
 
----
-
-## 技术栈
-
-Next.js 14 (App Router) · TypeScript (strict) · Tailwind CSS · Framer Motion · Zustand · Vitest
-pnpm · 智谱 GLM-5 · localStorage（无数据库）
-
-**GLM-5 API**：`POST https://open.bigmodel.cn/api/paas/v4/chat/completions`
-`model: "glm-5"` · `temperature: 0.8` · `max_tokens: 1024` · `stream: true` · 最近 20 轮 · 错误用中文提示
+**工作流方向**：`design/（Obsidian 编辑）→ project/（Claude 实现）→ Vercel（部署）`
 
 ---
 
 ## 开发工作流
 
 ```
-设计共创 → 编码 → /check → commit → /deploy（用户要求时）
+用户编辑设计 → /apply-design → 编码 → /check → commit → /deploy（用户要求时）
 ```
 
+**应用设计变更**
+→ 用户在 Obsidian 修改 design/*/output/ → 告诉 Claude "读取更新" → `/apply-design`
+
 **大功能**（≥3 文件 / 新页面 / 新系统）
-→ 讨论方案 → 更新设计文档 + PLAN.md → 用户确认 → `/my-feature-pipeline`
+→ 讨论方案 → 更新 PLAN.md → 用户确认 → `/my-feature-pipeline`
 
 **小改动**（≤2 文件，样式 / 文案 / 简单逻辑）
 → 直接编码 → `/check` → commit
@@ -62,7 +60,7 @@ pnpm · 智谱 GLM-5 · localStorage（无数据库）
 ### 核心规则
 
 1. **编码完成后必须调用 `/check`** — 不可跳过，不需要用户提醒
-2. 设计资源改动后调用 `/sync-design`
+2. 用户说"读取更新"或"应用设计"时调用 `/apply-design`
 3. 用户说"部署"时调用 `/deploy`
 4. 先在 localhost:3000 验证，不推到线上
 
@@ -73,12 +71,11 @@ pnpm · 智谱 GLM-5 · localStorage（无数据库）
 | 时机 | Skill |
 |------|-------|
 | 新对话启动 | `/startup` |
+| 应用设计变更 | `/apply-design` |
 | 编码完成 | `/check` |
-| 设计资源变动 | `/sync-design` |
 | 部署上线 | `/deploy` |
 | 新功能开发 | `/my-feature-pipeline` |
 | 新建页面 / 重大视觉改动 | `frontend-design`（先加载再编码） |
-| 更新设计文档 | `my-update-design-doc` |
 | 调试 | `/investigate` |
 | 视觉审计 | `/design-review` |
 
@@ -107,18 +104,7 @@ pnpm · 智谱 GLM-5 · localStorage（无数据库）
 
 ---
 
-## 代码规范
+## Git
 
-```
-TypeScript strict · 禁止 any
-函数式组件 + Hooks · 禁止 class 组件
-文件名：PascalCase（组件）/ kebab-case（工具）
-注释中文 · 变量名英文
-禁止 console.log 留在生产代码
-核心模块必须有单元测试
-npm 命令在 project/ 下运行
-```
-
-**Git**：
 - 格式 `type: english description` — feat / fix / style / refactor / test / docs / chore
 - 大改动前 `checkpoint: description`

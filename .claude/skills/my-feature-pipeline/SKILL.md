@@ -21,7 +21,7 @@ description: "新功能开发全流程流水线。当用户说'新增功能'、'
 
 1. Read `progress.md`
 2. Read `PLAN.md`
-3. Read `project/设计文档/项目圣经.md`
+3. Read 相关的 `design/*/output/` 文件（根据功能涉及的领域）
 4. Read 本 skill 目录下的 `gotchas.md`
 
 然后进入阶段一。
@@ -174,5 +174,5 @@ git add [具体文件] && git commit -m "feat: [功能描述]"
 
 - 质量检验 → `/check`（不自行编排 /review + /qa）
 - 前端新页面 / 重大视觉改动 → `frontend-design`
-- 设计资源改动 → `/sync-design`
+- 设计变更应用 → `/apply-design`
 - 其他规则遵守项目 CLAUDE.md
