@@ -53,13 +53,13 @@ story（基础层，无上游）
 
 ### 文件位置
 
-- `shared/` — 导出的 .docx 文件，直接上传到 Google Drive
-- `scripts/export-shared.mjs` — 导出脚本
+- `_shared-google-drive/` — 导出的 .docx 文件，直接上传到 Google Drive
+- `_export-scripts/export-shared.mjs` — 导出脚本
 
 ### 工作流
 
 ```
-导出：Obsidian 编辑 → node design/scripts/export-shared.mjs → 上传到 Drive
+导出：Obsidian 编辑 → node design/_export-scripts/export-shared.mjs → 上传到 Drive
 回同步：从 Drive 下载 .docx 到 shared/ → 对 Claude 说"同步 Google Doc" → 自动对比更新
 ```
 

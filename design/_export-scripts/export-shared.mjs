@@ -1,8 +1,8 @@
 /**
- * 导出设计文档到 design/shared/
+ * 导出设计文档到 design/_shared-google-drive/
  * Obsidian .md → 剥离专有语法 → pandoc → .docx
  *
- * Usage: node design/scripts/export-shared.mjs
+ * Usage: node design/_export-scripts/export-shared.mjs
  */
 
 import { readFileSync, writeFileSync, mkdirSync, rmSync, unlinkSync, readdirSync, statSync } from 'node:fs';
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DESIGN_DIR = join(__dirname, '..');
-const SHARED_DIR = join(DESIGN_DIR, 'shared');
+const SHARED_DIR = join(DESIGN_DIR, '_shared-google-drive');
 
 // --- 文件映射 ---
 
