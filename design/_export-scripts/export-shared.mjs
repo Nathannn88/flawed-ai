@@ -17,10 +17,11 @@ const SHARED_DIR = join(DESIGN_DIR, '_shared-google-drive');
 // --- 文件映射 ---
 
 const FILE_MAP = [
+  { src: '项目主旨.md',          dest: '项目主旨',                         convert: true },
   { src: 'story/世界观.md',      dest: '01-世界观与叙事/世界观与项目本质', convert: true },
-  { src: 'story/事件剧本.md',    dest: '01-世界观与叙事/事件剧本',         convert: true, postProcess: stripEventIdColumn },
+  { src: 'story/事件剧本.md',    dest: '01-世界观与叙事/事件剧本',         convert: true },
   { src: 'character/诗人设定.md', dest: '02-角色设计/诗人设定',             convert: true },
-  { src: 'character/企鹅设定.md', dest: '02-角色设计/企鹅设定',             convert: true },
+  { src: 'character/宠物设定.md', dest: '02-角色设计/宠物设定',             convert: true },
   { src: 'style/视觉风格.md',    dest: '03-视觉风格/视觉风格',             convert: true, postProcess: stripTechReferences },
   { src: 'system/系统机制.md',   dest: '04-系统机制/系统机制',              convert: true },
 ];

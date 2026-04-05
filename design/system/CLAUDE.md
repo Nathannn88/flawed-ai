@@ -4,23 +4,18 @@
 
 ## 职责范围
 
-产品流程、熟悉度系统、付费机制、事件触发规则、终局机制、
-成为诗人后的系统（航程燃料、火种、失速、灯塔模式）。
+产品流程、审美能量系统、面包纹路载体系统、核心合成、
+烘焙机制、付费机制、阶段机制、内容生态、社区机制（航线、灯塔）。
 
 ## 上游依赖
 
-- `design/story/output/世界观.md` — 终局选择的叙事意义
-- `design/character/output/企鹅设定.md` — 企鹅在系统中的角色（变形、火种）
+- `design/story/世界观.md` — 阶段结构与社区愿景的叙事意义
+- `design/character/宠物设定.md` — 宠物在系统中的角色（能量载体、AI 功能）
+- `design/项目主旨.md` — 最高权威
 
 ## 下游影响
 
-- `project/src/lib/familiarity.ts` — 熟悉度计算
-- `project/src/lib/event-system.ts` — 事件触发逻辑
-- `project/src/lib/gold-system.ts` — 经济系统
-- `project/src/lib/penguin-system.ts` — 企鹅变形触发
-- `project/src/lib/fuel-system.ts` — 航程燃料
-- `project/src/lib/spark-system.ts` — 火种生成
-- `project/src/lib/ending-system.ts` — 终局逻辑
+- `project/src/lib/` — 各系统模块实现
 - `project/src/types/` — 所有系统相关类型定义
 - `project/src/store/gameStore.ts` — 状态管理
 
@@ -33,7 +28,7 @@
 
 ## 设计文稿
 
-- `系统机制.md` — 产品流程 + 熟悉度 + 经济 + 终局机制 + 成为诗人后系统
+- `系统机制.md` — 审美能量 + 面包纹路 + 核心合成 + 付费 + 阶段 + 社区
 
 ## output
 

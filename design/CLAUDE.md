@@ -4,14 +4,20 @@
 
 ---
 
+## 权威文件
+
+`项目主旨.md` 是整个项目的最高权威。所有子项目设计文稿必须与此文件保持一致。
+
+---
+
 ## 子项目
 
 | 子项目 | 路径 | 职责 |
 |-------|------|------|
-| 世界观与叙事 | `story/` | 项目哲学、异世界背景、事件剧本、终局叙事 |
-| 角色设计 | `character/` | 诗人人格、企鹅形态、语言风格、阶段行为 |
+| 世界观与叙事 | `story/` | 项目哲学、海难背景、阶段结构、社区愿景 |
+| 角色设计 | `character/` | 诗人设定、宠物设定（鱼/船心脏） |
 | 视觉风格 | `style/` | 配色、排版、动画、设计 token |
-| 系统机制 | `system/` | 熟悉度、经济、燃料、产品流程、终局机制 |
+| 系统机制 | `system/` | 审美能量、核心合成、面包纹路、付费、社区机制 |
 
 ---
 
@@ -27,6 +33,8 @@
 ## 依赖关系
 
 ```
+项目主旨.md（最高权威）
+  ↓
 story（基础层，无上游）
   ├→ character（读取世界观来定义角色）
   ├→ system（读取世界观来定义机制）
@@ -49,7 +57,7 @@ story（基础层，无上游）
 
 ### 共享范围
 
-6 个设计文档（排除代码相关内容：`design-system.md`、`tailwind-tokens.md`、所有 `CLAUDE.md`）。
+设计文档 + 项目主旨（排除代码相关内容：`design-system.md`、`tailwind-tokens.md`、所有 `CLAUDE.md`）。
 
 ### 文件位置
 
@@ -60,13 +68,12 @@ story（基础层，无上游）
 
 ```
 导出：Obsidian 编辑 → node design/_export-scripts/export-shared.mjs → 上传到 Drive
-回同步：从 Drive 下载 .docx 到 shared/ → 对 Claude 说"同步 Google Doc" → 自动对比更新
+回同步：从 Drive 下载 .docx 到 _shared-google-drive/ → 对 Claude 说"同步 Google Doc" → 自动对比更新
 ```
 
 ### 导出脚本做的事
 
 - 剥离 YAML frontmatter、`[[wikilinks]]`、`![[embeds]]`
-- 删除事件剧本中的 event ID 列（代码标识符）
 - 删除视觉风格中的技术文件引用
 - 通过 pandoc 转为 .docx
 
