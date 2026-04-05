@@ -43,6 +43,35 @@ story（基础层，无上游）
 
 ---
 
+## 团队共享（Google Drive）
+
+设计文稿通过 Google Drive 共享给团队协作。Obsidian 是 source of truth，Google Docs 是协作镜像。
+
+### 共享范围
+
+6 个设计文档（排除代码相关内容：`design-system.md`、`tailwind-tokens.md`、所有 `CLAUDE.md`）。
+
+### 文件位置
+
+- `shared/` — 导出的 .docx 文件，直接上传到 Google Drive
+- `scripts/export-shared.mjs` — 导出脚本
+
+### 工作流
+
+```
+导出：Obsidian 编辑 → node design/scripts/export-shared.mjs → 上传到 Drive
+回同步：从 Drive 下载 .docx 到 shared/ → 对 Claude 说"同步 Google Doc" → 自动对比更新
+```
+
+### 导出脚本做的事
+
+- 剥离 YAML frontmatter、`[[wikilinks]]`、`![[embeds]]`
+- 删除事件剧本中的 event ID 列（代码标识符）
+- 删除视觉风格中的技术文件引用
+- 通过 pandoc 转为 .docx
+
+---
+
 ## v1 归档
 
 `v1-archive/` 保存旧版设计文件，仅供参考，不影响当前开发。
