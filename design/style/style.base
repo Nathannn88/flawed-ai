@@ -1,14 +1,10 @@
 filters:
   and:
-    - file.inFolder("design/style")
-    - file.ext == "md"
+    - file.folder == "Efforts/On/AI Poet Pipeline/design/style"
     - '!file.name.contains("MAP")'
-    - '!file.name.contains("CLAUDE")'
+    - file.ext == "md"
 formulas:
   类型: if(file.folder.contains("output"), "📦 产出", "📝 文稿")
 views:
-  - type: list
-    name: 文件列表
-    order:
-      - file.name
-      - formula.类型
+  - type: table
+    name: 视图

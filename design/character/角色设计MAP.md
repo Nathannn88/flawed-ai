@@ -3,6 +3,7 @@ up: "[[AI诗人]]"
 tags:
   - AI诗人
   - map
+Efforts: "[[AI诗人]]"
 ---
 
 # 角色设计
