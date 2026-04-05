@@ -10,7 +10,7 @@
 ## 上游依赖
 
 - `design/character/output/诗人设定.md` — 视觉风格需要反映角色气质
-- `design/story/output/世界观.md` — 异世界的视觉氛围
+- `design/story/output/世界观.md` — 海岛与海洋的视觉氛围
 
 ## 下游影响
 
