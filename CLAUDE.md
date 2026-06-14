@@ -102,7 +102,7 @@ flawed-ai/
 | 设计深研 / 多源调研 | `/my-deep-research` |
 | 设计文档写作 | `vibe-writing`（长文设计稿时） |
 
-> 代码阶段才用的 skill（apply-design / check / deploy / feature-pipeline 等）见下方冻结附录。
+> 代码阶段的工作流（曾有 apply-design / check / deploy / my-feature-pipeline 等项目 skill，**v3 设计阶段已删除**，编码启动时从零重建）见下方冻结附录。
 
 ---
 
@@ -117,29 +117,28 @@ flawed-ai/
 
 ## 附录：代码工作流（当前冻结 ❄️）
 
-> **为什么在这里**：以下整套是为 v1「AI 诗人聊天应用」的**编码阶段**搭建的。世界观历经 v2、v3 推倒重来后，代码层尚未开始重构，因此**这套流程当前全部不激活**。保留是为了 v3 编码启动时能快速复用，不是现在的操作指南。
+> **为什么在这里**：以下整套是为 v1「AI 诗人聊天应用」的**编码阶段**搭建的。世界观历经 v2、v3 推倒重来后，代码层尚未开始重构，因此**这套流程当前全部不激活**。
 >
-> **历史沿革与各 skill 来由详见 `写作方式说明.md`。**
+> **2026-06-15 清理**：原项目内 4 个编码 skill（`apply-design` / `check` / `deploy` / `my-feature-pipeline`）的映射表/部署目标全是 v1 死引用，其中 `apply-design` 还会误触发设计阶段的"读取更新"——**已全部删除**（见 git 历史）。下表仅作为 v3 编码启动时**从零重建**的工作流参考。
+>
+> **历史沿革详见 `写作方式说明.md`。**
 
-**何时解冻**：当 v3 设计定稿、决定开始写代码时——届时需先按 v3 设计**重写本附录、`project/CLAUDE.md` 的模块表、`apply-design` 的映射表、`PLAN.md`**（它们当前都还指向 v1 的 penguin/fuel/spark/familiarity/GLM-5 聊天模块，已是死引用）。
+**何时解冻**：当 v3 设计定稿、决定开始写代码时——届时按 v3 设计**重写 `project/CLAUDE.md` 模块表、`PLAN.md`、本附录，并重建下列编码 skill**（旧的全指向 v1 的 penguin/fuel/spark/familiarity/GLM-5 聊天模块，不可复用）。
 
 <details>
-<summary>v3 编码启动后的工作流（点开）</summary>
+<summary>v3 编码启动后的工作流参考（点开 · 项目 skill 均需重建）</summary>
 
-**主循环**：`用户编辑设计 → /apply-design → 编码 → /check → commit → /deploy（用户要求时）`
+**主循环（概念）**：`用户编辑设计 → 应用设计变更 → 编码 → 质量检查（test/lint/build）→ commit → 部署（用户要求时）`
 
-| 时机 | Skill | 状态 |
-|------|-------|------|
-| 应用设计变更到代码 | `/apply-design` | ⚠️ 映射表是 v1，需重写 |
-| 编码完成（必调用） | `/check` | 可复用（test/lint/build 编排） |
-| 新功能开发 | `/my-feature-pipeline` | 可复用 |
-| 新建页面 / 重大视觉改动 | `frontend-design` | 可复用（禁 AI 通用审美：Inter/Roboto·紫渐变白底） |
-| 部署上线 | `/deploy` | ⚠️ 目标是 v1 的 vercel-deploy/v1/ |
-| 调试 | `/investigate` | 可复用 |
-| 视觉审计 | `/design-review` | 可复用 |
+| 环节 | 原 skill（已删，需重建） | 重建要点 |
+|------|------|------|
+| 应用设计变更到代码 | apply-design | 映射表须按 v3 设计重写 |
+| 编码完成质量链 | check | test/lint/build 编排 |
+| 新功能开发 | my-feature-pipeline | 功能流水线 |
+| 部署上线 | deploy | 目标须改为 v3 部署仓库（旧指向 `vercel-deploy/v1/`）|
 
-**核心规则（编码阶段）**：编码完成必调 `/check` 不可跳过 · 先在 localhost:3000 验证不直接推线上 · 同一 bug 改 >2 次未解决则 `/investigate`。
+**仍可用的全局 / gstack skill**（非项目内，未删）：`frontend-design`（禁 AI 通用审美：Inter/Roboto·紫渐变白底）、`/investigate`（调试）、`/design-review`（视觉审计）、`/review` `/qa` `/browse` `/canary` `/ship` 等——`/ship` 的 push 必须等用户确认。
 
-**gstack 通用 skill**：`/review` `/qa` `/browse` `/benchmark` `/canary` `/ship` 等——其中 `/review`+`/qa` 由 `/check` 编排，浏览器操作用 `/browse` 不用 MCP，`/ship` 的 push 必须等用户确认。
+**核心规则（编码阶段）**：编码完成必做质量检查不可跳过 · 先在 localhost:3000 验证不直接推线上 · 同一 bug 改 >2 次未解决则 `/investigate`。
 
 </details>
