@@ -52,7 +52,7 @@ flawed-ai/
 │   ├── system/                      ← 系统机制、核心循环
 │   ├── style/                       ← 视觉风格、设计 token
 │   └── v1-archive/                  ← v1 旧版归档（仅参考）
-└── project/                         ← 代码层（⚠️ 仍是 v1，待 v2 重构，详见 project/CLAUDE.md）
+└── project/                         ← 代码层（⚠️ 仍是 v1，待 v3 重构，详见 project/CLAUDE.md）
 ```
 
 **工作流方向**：`design/（Obsidian 编辑）→ project/（Claude 实现）→ Vercel（部署）`
@@ -117,14 +117,14 @@ flawed-ai/
 
 ## 附录：代码工作流（当前冻结 ❄️）
 
-> **为什么在这里**：以下整套是为 v1「AI 诗人聊天应用」的**编码阶段**搭建的。v2 世界观推倒重来后，代码层尚未开始重构，因此**这套流程当前全部不激活**。保留是为了 v2 编码启动时能快速复用，不是现在的操作指南。
+> **为什么在这里**：以下整套是为 v1「AI 诗人聊天应用」的**编码阶段**搭建的。世界观历经 v2、v3 推倒重来后，代码层尚未开始重构，因此**这套流程当前全部不激活**。保留是为了 v3 编码启动时能快速复用，不是现在的操作指南。
 >
 > **历史沿革与各 skill 来由详见 `写作方式说明.md`。**
 
-**何时解冻**：当 v2 设计定稿、决定开始写代码时——届时需先按 v2 设计**重写本附录、`project/CLAUDE.md` 的模块表、`apply-design` 的映射表、`PLAN.md`**（它们当前都还指向 v1 的 penguin/fuel/spark/familiarity/GLM-5 聊天模块，已是死引用）。
+**何时解冻**：当 v3 设计定稿、决定开始写代码时——届时需先按 v3 设计**重写本附录、`project/CLAUDE.md` 的模块表、`apply-design` 的映射表、`PLAN.md`**（它们当前都还指向 v1 的 penguin/fuel/spark/familiarity/GLM-5 聊天模块，已是死引用）。
 
 <details>
-<summary>v2 编码启动后的工作流（点开）</summary>
+<summary>v3 编码启动后的工作流（点开）</summary>
 
 **主循环**：`用户编辑设计 → /apply-design → 编码 → /check → commit → /deploy（用户要求时）`
 
