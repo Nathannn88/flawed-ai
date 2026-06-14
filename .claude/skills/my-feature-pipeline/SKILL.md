@@ -19,7 +19,7 @@ description: "新功能开发全流程流水线。当用户说'新增功能'、'
 
 先执行（不需要用户确认）：
 
-1. Read `progress.md`
+1. Read `记录/进度.md`
 2. Read `PLAN.md`
 3. Read 相关的 `design/*/` 设计文稿（根据功能涉及的领域）
 4. Read 本 skill 目录下的 `gotchas.md`
@@ -73,7 +73,7 @@ Read `references/checklist-template.md` 获取模板，但**根据规模智能�
 ### 更新项目文件
 
 - `PLAN.md`：添加功能条目，状态 `进行中`
-- `progress.md`：记录功能开始
+- `记录/进度.md`：记录功能开始
 
 ### 等待确认
 
@@ -139,7 +139,7 @@ git add [具体文件] && git commit -m "feat: [功能描述]"
 
 ### 更新项目文件
 
-- `progress.md` — 记录完成 + 日期
+- `记录/进度.md` — 记录完成 + 日期（重大决策记 `记录/决策与活动日志.md`）
 - `PLAN.md` — 标记 `已完成`
 
 ### 清理

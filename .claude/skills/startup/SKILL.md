@@ -22,7 +22,8 @@ description: "Session 启动检查。每次新开对话时自动执行：读取�
 
 同时执行：
 
-- **Read** `progress.md` — 当前版本、阶段、进行中 / 待做项
+- **Read** `记录/进度.md` — 当前版本、阶段、进行中 / 待做项
+- **Read** `记录/决策与活动日志.md`（顶部最新几条）— 近期决策与活动
 - **Read** `PLAN.md` — 当前开发阶段、待办项
 - **Run** `npm test`（在 `project/` 下） — 测试状态
 
@@ -57,7 +58,7 @@ git log --oneline -5 design/
 X passed / Y failed / Z skipped
 
 ### 进行中
-- ...（从 progress.md 提取）
+- ...（从 记录/进度.md 提取）
 
 ### 待做（前 3 项）
 - ...（从 PLAN.md 提取）

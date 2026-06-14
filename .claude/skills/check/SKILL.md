@@ -79,8 +79,8 @@ npm test && npm run lint && npm run build
 3. 从「二、基础检查」重新开始（不是只重跑失败项）
 4. 同一问题 >2 次未解决 → 建议 `/investigate`
 
-## 附：progress.md 绑定
+## 附：记录/进度.md 绑定
 
 检查通过 = 即将 commit。此时判断：
-- 本次改动完成了一个功能点 → 提醒更新 progress.md
+- 本次改动完成了一个功能点 → 提醒更新 `记录/进度.md`
 - 小修复 → 跳过
