@@ -1,6 +1,20 @@
 # Flawed AI — 有缺陷的AI
 
 > 一款以提升用户艺术感知能力为核心目标的 **AI 宠物艺术教育游戏**。
+> 玩家扮演被供奉于庙宇中的"诗人之像"，指挥可变形的宠物完成「供奉 → 转化 → 再创作」。
+
+---
+
+## ⬛ 当前阶段（最重要，先读这里）
+
+**版本 v2 · 设计定稿中 · 代码层尚未启动。**
+
+> v2 一行代码都还没写。现在的工作是**设计协作**，不是编码。
+> 不要因为下面有代码工作流就以为该写代码——那整套已冻结，见 [附录](#附录代码工作流当前冻结)。
+
+- **最高权威**：`design/项目主旨.md`（所有设计文稿必须与它一致）
+- **当前进度**：`progress.md`（每次新对话先读）
+- **协作方式全文说明**：`写作方式说明.md`
 
 ---
 
@@ -13,7 +27,7 @@
 - 禁止自动 git push — 必须用户确认
 - API 密钥通过 `.env.local` 引用，禁止硬编码
 
-**Session 启动**：每次新开对话，执行 `/startup`。
+**Session 启动**：每次新开对话执行 `/startup`（读进度 → 报状态 → 问下一步）。
 
 ---
 
@@ -21,86 +35,53 @@
 
 ```
 flawed-ai/
-├── CLAUDE.md / PLAN.md / progress.md    ← 项目管理
-├── design/                               ← 设计层（Obsidian 编辑，详见 design/CLAUDE.md）
-│   ├── story/                            ← 世界观、事件剧本
-│   ├── character/                        ← 诗人设定、企鹅设定
-│   ├── style/                            ← 视觉风格、设计 token
-│   ├── system/                           ← 系统机制、产品流程
-│   └── v1-archive/                       ← 旧版归档
-└── project/                              ← 可部署代码（详见 project/CLAUDE.md）
-    ├── src/                               ← app / components / data / hooks / store / lib / types
-    ├── public/                            ← 静态资源
-    ├── tests/                             ← 测试
-    └── vercel-deploy/v1/                  ← 部署副本（/deploy 管理）
+├── CLAUDE.md / progress.md          ← 项目管理（当前活跃）
+├── 写作方式说明.md                   ← 协作工作方式手册（人读）
+├── PLAN.md                          ← ⚠️ v1 旧规划，已冻结待重写
+├── design/                          ← 设计层（Obsidian 编辑，详见 design/CLAUDE.md）
+│   ├── 项目主旨.md                   ← 最高权威
+│   ├── story/                       ← 世界观、事件剧本
+│   ├── character/                   ← 诗人设定、宠物设定
+│   ├── system/                      ← 系统机制、核心循环
+│   ├── style/                       ← 视觉风格、设计 token
+│   └── v1-archive/                  ← v1 旧版归档（仅参考）
+└── project/                         ← 代码层（⚠️ 仍是 v1，待 v2 重构，详见 project/CLAUDE.md）
 ```
 
 **工作流方向**：`design/（Obsidian 编辑）→ project/（Claude 实现）→ Vercel（部署）`
+当前只走到第一段——design/ 内部的设计协作。
 
 ---
 
-## 开发工作流
+## 设计协作循环（当前阶段的核心工作流）
 
 ```
-用户编辑设计 → /apply-design → 编码 → /check → commit → /deploy（用户要求时）
+用户在 Obsidian 写/改设计
+   → 对 Claude 说"读取更新"
+   → Claude：读变更 → 审慎追问/挑战 → 帮助细化与结构化 → 检查与项目主旨一致性
+   → 更新对应 design/ 文稿 + progress.md
 ```
 
-**应用设计变更**
-→ 用户在 Obsidian 修改 design/ 设计文稿 → 告诉 Claude "读取更新" → `/apply-design`
+**Claude 在设计阶段的职责**（不只是录入）：
+1. **检查一致性** — 新内容是否与 `design/项目主旨.md` 冲突？术语是否统一（见主旨第十节术语表）？
+2. **审慎挑战** — 设定有漏洞、与既有机制矛盾、或路径绕远时，直接提出更优方案，不盲从。
+3. **结构化** — 把零散口述整理成对应子项目（story / character / system / style）下的清晰文稿。
+4. **标记开放问题** — 未定案的设定记入 `progress.md` 的"开放问题"，不擅自编造。
 
-**大功能**（≥3 文件 / 新页面 / 新系统）
-→ 讨论方案 → 更新 PLAN.md → 用户确认 → `/my-feature-pipeline`
-
-**小改动**（≤2 文件，样式 / 文案 / 简单逻辑）
-→ 直接编码 → `/check` → commit
-
-**修 Bug**
-→ 同一问题改 >2 次未解决则必须 `/investigate` → 修复 → `/check` → commit
-
-### 核心规则
-
-1. **编码完成后必须调用 `/check`** — 不可跳过，不需要用户提醒
-2. 用户说"读取更新"或"应用设计"时调用 `/apply-design`
-3. 用户说"部署"时调用 `/deploy`
-4. 先在 localhost:3000 验证，不推到线上
+> 设计文档写什么、放哪、用什么术语，详见各子项目 `design/*/CLAUDE.md`。
 
 ---
 
-## Skill 调用表
+## Skill 速查（当前阶段）
 
 | 时机 | Skill |
 |------|-------|
 | 新对话启动 | `/startup` |
-| 应用设计变更 | `/apply-design` |
-| 编码完成 | `/check` |
-| 部署上线 | `/deploy` |
-| 新功能开发 | `/my-feature-pipeline` |
-| 新建页面 / 重大视觉改动 | `frontend-design`（先加载再编码） |
-| 调试 | `/investigate` |
-| 视觉审计 | `/design-review` |
+| 现象拆解 / 决策破局 | `/my-deep-analyst`（硬触发词见全局偏好） |
+| 设计深研 / 多源调研 | `/my-deep-research` |
+| 设计文档写作 | `vibe-writing`（长文设计稿时） |
 
-> **frontend-design**：新建页面或重大视觉改动时加载。改一行 CSS 不需要。
-> 禁止 AI 通用审美（Inter / Roboto · 紫色渐变白底）。
-
----
-
-## gstack
-
-**可用 skills**：
-
-| 类别 | Skills |
-|------|--------|
-| 代码质量 | `/review` · `/investigate` |
-| 测试 | `/qa` · `/qa-only` · `/benchmark` |
-| 浏览器 | `/browse` |
-| 安全模式 | `/careful` · `/freeze` · `/guard` · `/unfreeze` |
-| 视觉 | `/design-review` |
-| 发布 | `/canary` · `/document-release` · `/ship` |
-
-**项目规则**：
-- 浏览器操作用 `/browse`，不用 MCP
-- `/review` + `/qa` 由 `/check` 编排
-- `/ship` 的 push 步骤必须等用户确认
+> 代码阶段才用的 skill（apply-design / check / deploy / feature-pipeline 等）见下方冻结附录。
 
 ---
 
@@ -108,3 +89,36 @@ flawed-ai/
 
 - 格式 `type: english description` — feat / fix / style / refactor / test / docs / chore
 - 大改动前 `checkpoint: description`
+- 当前阶段提交多为 `docs:` / `design:` 类（改的是 design/ 文稿）
+
+---
+---
+
+## 附录：代码工作流（当前冻结 ❄️）
+
+> **为什么在这里**：以下整套是为 v1「AI 诗人聊天应用」的**编码阶段**搭建的。v2 世界观推倒重来后，代码层尚未开始重构，因此**这套流程当前全部不激活**。保留是为了 v2 编码启动时能快速复用，不是现在的操作指南。
+>
+> **历史沿革与各 skill 来由详见 `写作方式说明.md`。**
+
+**何时解冻**：当 v2 设计定稿、决定开始写代码时——届时需先按 v2 设计**重写本附录、`project/CLAUDE.md` 的模块表、`apply-design` 的映射表、`PLAN.md`**（它们当前都还指向 v1 的 penguin/fuel/spark/familiarity/GLM-5 聊天模块，已是死引用）。
+
+<details>
+<summary>v2 编码启动后的工作流（点开）</summary>
+
+**主循环**：`用户编辑设计 → /apply-design → 编码 → /check → commit → /deploy（用户要求时）`
+
+| 时机 | Skill | 状态 |
+|------|-------|------|
+| 应用设计变更到代码 | `/apply-design` | ⚠️ 映射表是 v1，需重写 |
+| 编码完成（必调用） | `/check` | 可复用（test/lint/build 编排） |
+| 新功能开发 | `/my-feature-pipeline` | 可复用 |
+| 新建页面 / 重大视觉改动 | `frontend-design` | 可复用（禁 AI 通用审美：Inter/Roboto·紫渐变白底） |
+| 部署上线 | `/deploy` | ⚠️ 目标是 v1 的 vercel-deploy/v1/ |
+| 调试 | `/investigate` | 可复用 |
+| 视觉审计 | `/design-review` | 可复用 |
+
+**核心规则（编码阶段）**：编码完成必调 `/check` 不可跳过 · 先在 localhost:3000 验证不直接推线上 · 同一 bug 改 >2 次未解决则 `/investigate`。
+
+**gstack 通用 skill**：`/review` `/qa` `/browse` `/benchmark` `/canary` `/ship` 等——其中 `/review`+`/qa` 由 `/check` 编排，浏览器操作用 `/browse` 不用 MCP，`/ship` 的 push 必须等用户确认。
+
+</details>
