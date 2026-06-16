@@ -1,0 +1,58 @@
+{
+  "_comment": "my-design-sync 的项目结构快照。结构变了只改这里，SKILL.md 主体不动。路径相对仓库根 flawed-ai/。",
+
+  "authority": {
+    "file": "design/项目主旨.md",
+    "term_table_section": "十一、术语约定与开放问题",
+    "note": "最高权威。它本身被当作输入时走『主旨变更』高爆炸半径分支（见 SKILL.md Phase B）。术语表是别名集与一致性检查的基准。"
+  },
+
+  "boards": {
+    "story":     { "dir": "design/story",     "claude_md": "design/story/CLAUDE.md",     "map": "design/story/世界观与叙事MAP.md", "role": "基础层·无上游（世界观/叙事/岛屿/三阶段）" },
+    "character": { "dir": "design/character", "claude_md": "design/character/CLAUDE.md", "map": "design/character/角色设计MAP.md",   "role": "角色（神像/宠物/上贡者）人设·名字·关系" },
+    "system":    { "dir": "design/system",    "claude_md": "design/system/CLAUDE.md",    "map": "design/system/系统机制MAP.md",     "role": "核心循环/机制/数值/付费/社区" },
+    "style":     { "dir": "design/style",     "claude_md": "design/style/CLAUDE.md",     "map": "design/style/视觉风格MAP.md",       "role": "视觉风格/美术方向/设计 token" }
+  },
+
+  "dependency_graph": {
+    "_comment": "改了某板块 → 必查下游。改任何东西都先对上游权威(主旨)做一致性闸门。",
+    "项目主旨": ["story", "character", "system", "style"],
+    "story":     ["character", "system", "style"],
+    "character": ["system", "style", "story"],
+    "system":    ["story"],
+    "style":     []
+  },
+
+  "records": {
+    "progress":  "记录/进度.md",
+    "log":       "记录/决策与活动日志.md",
+    "sources":   "记录/源文件索引.md",
+    "note": "进度.md=现状板(开放问题增删)；决策与活动日志.md=append-only([决策]人拍板+为什么+否决了什么 / [活动]改了哪些文件)；源文件索引.md=Obsidian 源链接(只链接不复制)。"
+  },
+
+  "also_scan_root": ["CLAUDE.md", "PLAN.md", "主管使用说明.md", "写作方式说明.md"],
+
+  "do_not_touch": {
+    "_comment": "回扫旧概念时，这些地方出现旧词是合法历史/归档，绝不修改。",
+    "paths": ["design/v1-archive/", "记录/决策与活动日志.md"],
+    "note": "决策日志是 append-only 时间线，历史条目里的旧术语是史实；v1-archive 是 v1 归档。两者只读不改（除非给日志追加新条目）。"
+  },
+
+  "obsidian": {
+    "vault_atlas": "C:/Users/hsxx1/Documents/Obsidian Vault/Atlas/",
+    "note_rule": "本项目 Obsidian 笔记 frontmatter 必带 project: \"[[神像供奉AI]]\"；tag 极简(1-2个,复用优先)。源文件不复制进 repo，只在 源文件索引.md 更新链接。"
+  },
+
+  "commit": {
+    "convention": "type: english description (常用 design / docs)",
+    "push": "禁止自动 push，须用户确认",
+    "parent_repo_warning": "flawed-ai 是独立仓库(remote Nathannn88/flawed-ai)，不在父仓库 claude库 里 add 它"
+  },
+
+  "verification": {
+    "loop_until_clean": true,
+    "max_rounds": 3,
+    "adversarial_audit_every_run": true,
+    "note": "循环到『一整轮零发现』才收尾；超 max_rounds 仍不干净则停手报告（结构性问题，需人介入）。"
+  }
+}
