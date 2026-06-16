@@ -27,6 +27,7 @@
 - **安全红线**：① 不访问 `D:\保存文件\claude库\` 以外的文件（Obsidian 除外）；② 不自动 git push（须用户确认）；③ API 密钥走 `.env.local`，禁止硬编码。
 - **Session 启动**：新对话执行 `/startup`（读进度 → 报状态 → 问下一步）。
 - **Git commit**：`type: english description`（feat / fix / docs / design / chore…）；大改动前先 `checkpoint:`。当前阶段多为 `docs:` / `design:`。
+- **Obsidian 笔记规范**（生成任何本项目 Obsidian 笔记时必守，全局 obsidian skill 也遵此）：① frontmatter 必带 `project: "[[神像供奉AI]]"`（属性 + 双链，非 tag）；② tag 极简——1-2 个能一眼分类即可，优先复用项目已用 tag（如 `游戏设计`），不堆宽泛/不相关 tag。
 
 ---
 
