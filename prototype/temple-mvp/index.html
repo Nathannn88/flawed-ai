@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>庙宇供奉 · Temple MVP</title>
+<style>
+  /* ============ 全局 · 东方治愈基调（去饱和柔光） ============ */
+  :root{
+    --ink:#2E3A38;        /* 描边墨线 */
+    --paper:#DACDB4;      /* 暖米白 */
+    --teal:#7DB1AC;       /* 天空青绿 */
+    --terra:#C06A3F;      /* 陶土橙 */
+    --sage:#7C9A5E;       /* 鼠尾草绿 */
+    --green:#5E7A45;      /* 深植被绿 */
+    --panel:rgba(46,58,56,0.82);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; overflow:hidden; background:#7DB1AC;
+    font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif; color:#2E3A38; }
+  #app{ position:fixed; inset:0; }
+  canvas{ display:block; }
+
+  /* ============ HUD（A4 · 始终可见的状态条） ============ */
+  #hud{ position:fixed; top:0; left:0; right:0; display:flex; gap:10px; align-items:center;
+    padding:10px 14px; pointer-events:none; z-index:10; flex-wrap:wrap; }
+  .chip{ pointer-events:auto; background:var(--panel); color:var(--paper);
+    border:2px solid var(--ink); border-radius:12px; padding:6px 12px; font-size:14px;
+    font-weight:600; letter-spacing:.5px; box-shadow:2px 2px 0 rgba(46,58,56,.35); }
+  .chip.day{ background:rgba(199,181,141,.92); color:var(--ink); }
+  .chip.night{ background:rgba(46,58,56,.92); color:var(--paper); }
+  .btn{ pointer-events:auto; cursor:pointer; background:var(--paper); color:var(--ink);
+    border:2px solid var(--ink); border-radius:12px; padding:6px 12px; font-size:14px;
+    font-weight:700; box-shadow:2px 2px 0 rgba(46,58,56,.35); user-select:none;
+    transition:transform .08s ease; }
+  .btn:hover{ transform:translateY(-1px); }
+  .btn:active{ transform:translateY(1px); box-shadow:1px 1px 0 rgba(46,58,56,.35); }
+  .btn.on{ background:var(--terra); color:var(--paper); }
+  .spd{ display:flex; gap:6px; }
+  #hint{ position:fixed; left:14px; bottom:14px; max-width:46%; z-index:10; pointer-events:none;
+    background:var(--panel); color:var(--paper); border:2px solid var(--ink);
+    border-radius:12px; padding:10px 14px; font-size:14px; line-height:1.5;
+    box-shadow:2px 2px 0 rgba(46,58,56,.35); }
+  #hint b{ color:#F2D9A0; }
+
+  /* ============ 物品栏 / 保管处（C2/C5 可见 UI） ============ */
+  #inventory{ position:fixed; right:14px; bottom:14px; z-index:10; width:230px;
+    background:var(--panel); color:var(--paper); border:2px solid var(--ink);
+    border-radius:12px; padding:10px 12px; box-shadow:2px 2px 0 rgba(46,58,56,.35); }
+  #inventory h4{ margin:0 0 8px; font-size:13px; letter-spacing:1px; opacity:.9; }
+  #invItems{ display:flex; flex-wrap:wrap; gap:8px; min-height:34px; }
+  .item{ cursor:pointer; background:rgba(218,205,180,.16); border:2px solid var(--paper);
+    border-radius:10px; padding:5px 9px; font-size:13px; font-weight:600;
+    display:flex; align-items:center; gap:6px; user-select:none; }
+  .item .dot{ width:12px; height:12px; border-radius:50%; border:1.5px solid var(--ink); }
+  .item.sel{ background:var(--terra); border-color:#F2D9A0; }
+  .item.record{ border-radius:50%; padding:6px 10px; }
+  .empty{ opacity:.55; font-size:12px; }
+
+  /* ============ 对话框（B5） ============ */
+  #dialogue{ position:fixed; left:50%; bottom:96px; transform:translateX(-50%);
+    z-index:20; width:min(520px,86vw); display:none; }
+  #dialogue .bubble{ background:var(--paper); color:var(--ink); border:3px solid var(--ink);
+    border-radius:16px; padding:14px 16px; box-shadow:3px 3px 0 rgba(46,58,56,.4); }
+  #dialogue .who{ font-weight:800; font-size:13px; opacity:.7; margin-bottom:4px; }
+  #dialogue .say{ font-size:17px; font-weight:600; margin-bottom:10px; }
+  #dialogue .row{ display:flex; gap:8px; }
+  #replyInput{ flex:1; border:2px solid var(--ink); border-radius:10px; padding:8px 10px;
+    font-size:15px; font-family:inherit; background:#fff; color:var(--ink); }
+  #replyEcho{ margin-top:8px; font-size:14px; font-style:italic; color:var(--green);
+    min-height:18px; }
+
+  /* ============ 加工进度（C4 可见进度反馈） ============ */
+  #process{ position:fixed; left:50%; top:64px; transform:translateX(-50%); z-index:15;
+    display:none; background:var(--panel); color:var(--paper); border:2px solid var(--ink);
+    border-radius:12px; padding:10px 14px; width:300px; box-shadow:2px 2px 0 rgba(46,58,56,.35); }
+  #process .lab{ font-size:13px; margin-bottom:6px; font-weight:700; }
+  #barWrap{ height:14px; background:rgba(0,0,0,.3); border:2px solid var(--ink);
+    border-radius:8px; overflow:hidden; }
+  #bar{ height:100%; width:0%; background:linear-gradient(90deg,var(--terra),#F2D9A0);
+    transition:width .12s linear; }
+  /* 播放提示（C6 可见反馈） */
+  #nowPlaying{ position:fixed; left:50%; top:64px; transform:translateX(-50%); z-index:15;
+    display:none; background:var(--terra); color:var(--paper); border:2px solid var(--ink);
+    border-radius:12px; padding:8px 16px; font-weight:800; letter-spacing:2px;
+    box-shadow:2px 2px 0 rgba(46,58,56,.35); }
+
+  #intro{ position:fixed; inset:0; z-index:50; display:flex; align-items:center;
+    justify-content:center; background:rgba(46,58,56,.55); backdrop-filter:blur(2px); }
+  #introCard{ background:var(--paper); border:3px solid var(--ink); border-radius:18px;
+    padding:26px 30px; max-width:560px; box-shadow:5px 5px 0 rgba(46,58,56,.4); }
+  #introCard h1{ margin:0 0 6px; font-size:24px; }
+  #introCard p{ font-size:14px; line-height:1.7; margin:8px 0; }
+  #introCard .start{ margin-top:14px; font-size:16px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- ===== HUD（A4） ===== -->
+<div id="hud">
+  <span id="phaseChip" class="chip day">☀️ 白天</span>
+  <span id="dayChip" class="chip">第 1 天</span>
+  <span id="clockChip" class="chip">剩余 20:00</span>
+  <div class="spd">
+    <span class="btn on" data-spd="1">1×</span>
+    <span class="btn" data-spd="5">5×</span>
+    <span class="btn" data-spd="20">20×</span>
+  </div>
+  <span id="actionBtn" class="btn">⏭ 跳过白天</span>
+</div>
+
+<div id="hint">提示加载中…</div>
+
+<!-- ===== 物品栏（C2/C5） ===== -->
+<div id="inventory">
+  <h4>📦 物品栏 / 保管处</h4>
+  <div id="invItems"><span class="empty">（空）夜晚回收供品后显示</span></div>
+</div>
+
+<!-- ===== 对话框（B5） ===== -->
+<div id="dialogue">
+  <div class="bubble">
+    <div class="who">上贡者</div>
+    <div class="say" id="npcSay">你好…</div>
+    <div class="row">
+      <input id="replyInput" type="text" placeholder="输入你的回应，回车确认…" autocomplete="off" />
+      <span class="btn" id="replyBtn">回应</span>
+    </div>
+    <div id="replyEcho"></div>
+  </div>
+</div>
+
+<!-- ===== 加工进度 / 播放（C4/C6） ===== -->
+<div id="process"><div class="lab" id="procLab">面包机加工中…</div><div id="barWrap"><div id="bar"></div></div></div>
+<div id="nowPlaying">♪ 正在播放唱片 ♪</div>
+
+<!-- ===== 开场说明 ===== -->
+<div id="intro"><div id="introCard">
+  <h1>庙宇供奉 · MVP</h1>
+  <p>你是供奉于庙中的<b>神像（诗人的化身）</b>。白天石像开门收贡，夜晚化为灵体、指挥<b>宠物</b>把供品加工成作品。</p>
+  <p><b>白天</b>：上贡者成群而来，各持一件供品。<b>点击上贡者</b>→ 供品入绿色区 + 拉近对话；不点也会自动留下供品。可按 <b>⏭ 跳过白天</b> 或等窗口耗尽进入夜晚。</p>
+  <p><b>夜晚</b>：庙门合上、神像化灵体。<b>点击供品 / 点击宠物</b>回收 → 点宠物变<b>面包机</b> → 选材料投料 → 约50秒产出<b>唱片</b> → 再点宠物变<b>唱片机</b> → 点击播放（有声）。</p>
+  <p>右上角 <b>1× / 5× / 20×</b> 倍速可加速审核。屏幕左下角始终有「当前该点什么」的提示。</p>
+  <p class="start"><span class="btn" id="startBtn">▶ 进入庙宇</span></p>
+</div></div>
+
+<!-- ============ Three.js r160 · 本地 UMD 全局版（零网络依赖，双击可运行） ============ -->
+<!-- three.min.js 会打印一句 "deprecated" warning，属预期无害；想消可删其开头的 console.warn 行 -->
+<script src="./three.min.js"></script>
+
+<script>
+// UMD 全局版：THREE 已挂在 window 上，无需 import（全程用 THREE. 前缀）
+
+/* ============================================================
+ * §A  皮肤化架构 —— assetConfig（任务 §2「皮肤可替换」必做）
+ *   渲染层只从此对象读取视觉参数。所有贴图路径留空 → 回退纯色占位。
+ *   将来往 assets/ 丢图 + 在此填路径，即可换肤而不改任何渲染逻辑。
+ * ========================================================== */
+const assetConfig = {
+  useTextures: false,            // 总开关：true 时才尝试加载下面的贴图路径
+  gradientSteps: 4,             // 卡通渲染阶数（§3：3~4 阶 gradientMap）
+  // 去饱和东方色盘（§3 色值锚点）
+  colors: {
+    sky:    '#7DB1AC',  // 天空 青绿
+    ground: '#C7B58D',  // 地面/崖壁 暖米褐
+    sageL:  '#7C9A5E',  // 植被 浅
+    sageD:  '#5E7A45',  // 植被 深
+    terra:  '#C06A3F',  // 屋顶/码头 陶土橙
+    wall:   '#9DA59B',  // 建筑墙 灰蓝
+    paper:  '#DACDB4',  // 暖米白
+    water:  '#8FC0B5',  // 水面
+    ink:    '#2E3A38',  // 描边墨线
+    white:  '#F2F2EC',  // 云/高光 平涂白
+    stone:  '#B9B7A8',  // 石像 砂岩灰
+    spirit: '#9FE3D8',  // 灵体 青绿辉光
+    dog:    '#C7894F',  // 宠物毛色（陶土系暖棕）
+    metal:  '#A9AEB0',  // 面包机/唱片机 机身
+  },
+  // 贴图路径（留空 = 用纯色占位）。换肤时在此填 './assets/xxx.png'
+  textures: {
+    ground:'', wall:'', roof:'', statue:'', pet:'', toaster:'', player:'', offering:'', record:'',
+  },
+};
+const C = name => new THREE.Color(assetConfig.colors[name]);
+
+/* ============================================================
+ * §B  时间 / 节奏常量（任务 §5 · 具名常量集中管理）
+ *   单位：游戏内秒。实际流逝 = 真实秒 × speed。
+ * ========================================================== */
+const TUNING = {
+  OFFERER_WALK_IN:   5,        // 走入 ≈ 5s
+  OFFERER_STAY:      10,       // 停留 ≈ 10s
+  OFFERER_WALK_OUT:  5,        // 走出 ≈ 5s
+  DAY_WINDOW:        20 * 60,  // 白天来访窗口 ≈ 20min
+  NIGHT_PROCESS:     50,       // 夜晚加工 ≈ 50s
+  SPAWN_MIN:         30,       // 组间隔下限（B1 具名常量）
+  SPAWN_MAX:         45,       // 组间隔上限
+  GROUP_MIN:         2,        // 每组 2~3 人
+  GROUP_MAX:         3,
+};
+
+/* ============================================================
+ * §C  渲染基础设施
+ * ========================================================== */
+const app = document.getElementById('app');
+const scene = new THREE.Scene();
+scene.background = C('sky');
+scene.fog = new THREE.Fog(C('sky'), 38, 78);
+
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 200);
+// §2 视角：固定的「微缩 diorama 高位斜俯三人称」机位（不可自由操控）。
+// 重新理解「视角从神像出发」：不是把相机放在神像眼睛里（那样看不见它），
+// 而是固定的过肩 ¾ 俯视，神像作为可见的前景锚点。相机退到后墙外的后上方，
+// 配合 DIORAMA_CUTAWAY 隐藏后墙/天花板/屋顶，使下面四样同屏可见：
+//   神像(全身,前景) · 宠物狗 · 绿色供奉区 · 庙门开口(及进出的上贡者)。
+// 几何已验证：神像全身落在画面下部前景，庙门开口在上部远景。
+// 微调指引：抬高/压低构图改 pos.y(9→10)，前后取景改 look.z(0→3) 与 FOV(48→54)。
+const CAM_HOME = { pos:new THREE.Vector3(3.0,9.5,-14.0), look:new THREE.Vector3(0.0,1.2,1.5) };
+camera.position.copy(CAM_HOME.pos);
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+app.appendChild(renderer.domElement);
+
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+/* ---- 灯光：白天外部光 / 夜晚室内灯（A2） ---- */
+const sun = new THREE.DirectionalLight(0xffffff, 1.7);      // 白天 · 从庙门射入
+sun.position.set(4, 12, 16);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-22; sun.shadow.camera.right=22;
+sun.shadow.camera.top=22; sun.shadow.camera.bottom=-22; sun.shadow.camera.far=80;
+scene.add(sun);
+const ambient = new THREE.HemisphereLight(0xffffff, 0x8a7c5c, 0.85);
+scene.add(ambient);
+const interior = new THREE.PointLight(0xffd9a0, 0.0, 60, 1.4); // 夜晚 · 室内暖灯
+interior.position.set(0, 6, 0);
+scene.add(interior);
+const interior2 = new THREE.PointLight(0xffe0b0, 0.0, 40, 1.6);
+interior2.position.set(0, 3.4, -6);
+scene.add(interior2);
+
+/* ============================================================
+ * §D  卡通渲染工具（§3 · MeshToonMaterial + gradientMap + 反向壳描边）
+ * ========================================================== */
+// 内联生成阶梯渐变 gradientMap（DataTexture），无需外部美术素材
+function makeGradientMap(steps){
+  const data = new Uint8Array(steps);
+  for(let i=0;i<steps;i++) data[i] = Math.round(255 * i/(steps-1));
+  const tex = new THREE.DataTexture(data, steps, 1, THREE.RedFormat);
+  tex.minFilter = THREE.NearestFilter; tex.magFilter = THREE.NearestFilter;
+  tex.needsUpdate = true;
+  return tex;
+}
+const GRAD = makeGradientMap(assetConfig.gradientSteps);
+const INK = C('ink');
+const texLoader = new THREE.TextureLoader();
+
+// 皮肤化贴图读取：仅当 useTextures 且路径非空才加载，否则纯色占位
+function resolveMap(key){
+  if(!assetConfig.useTextures) return null;
+  const path = assetConfig.textures[key];
+  if(!path) return null;
+  const t = texLoader.load(path);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// 造一个「卡通材质 + 手绘墨线描边」的网格组。所有几何居中 → 反向壳缩放即均匀描边。
+function makeToon(geo, colorKey, opt={}){
+  const { outline=true, outlineScale=1.045, texKey=null, emissive=null, transparent=false, opacity=1 } = opt;
+  const grp = new THREE.Group();
+  const mat = new THREE.MeshToonMaterial({
+    color: (typeof colorKey==='string') ? C(colorKey) : new THREE.Color(colorKey),
+    gradientMap: GRAD,
+    map: texKey ? resolveMap(texKey) : null,
+    transparent, opacity,
+  });
+  if(emissive){ mat.emissive = new THREE.Color(emissive); mat.emissiveIntensity = 0.0; }
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  grp.add(mesh);
+  if(outline){
+    // 反向壳：BackSide + 略放大 → 深炭灰墨线（§3 灵魂特征）
+    const oMat = new THREE.MeshBasicMaterial({ color:INK, side:THREE.BackSide });
+    const oMesh = new THREE.Mesh(geo, oMat);
+    oMesh.scale.setScalar(outlineScale);
+    grp.add(oMesh);
+  }
+  grp.userData.mat = mat;
+  return grp;
+}
+
+/* ============================================================
+ * §E  搭建场景：庙宇长方体 + 地面 + 绿色区 + 神像 + 宠物
+ * ========================================================== */
+// --- 室外地面（暖米褐，供上贡者行走可见） ---
+const groundGeo = new THREE.BoxGeometry(80, 0.6, 80);
+const ground = makeToon(groundGeo, 'ground', { outline:false, texKey:'ground' });
+ground.position.set(0,-0.6,0);
+ground.children[0].receiveShadow = true;
+scene.add(ground);
+// 室外两侧鼠尾草绿草坡（点缀，呼应色盘）
+for(const [x,z,c] of [[-22,18,'sageD'],[22,16,'sageL'],[-18,30,'sageL'],[20,34,'sageD']]){
+  const hill = makeToon(new THREE.SphereGeometry(7,16,12), c, { outlineScale:1.03 });
+  hill.position.set(x,-3.5,z); hill.scale.y=0.5; scene.add(hill);
+}
+
+const TEMPLE = { w:16, h:8, d:20 };  // 长方体空间（A1）
+const halfD = TEMPLE.d/2;            // 前开口在 z=+10
+
+// --- 庙宇地板（陶土地坪） ---
+const floor = makeToon(new THREE.BoxGeometry(TEMPLE.w,0.5,TEMPLE.d),'paper',{outline:false});
+floor.position.set(0,-0.25,0); floor.children[0].receiveShadow=true; scene.add(floor);
+
+// --- 墙体（灰蓝） ---
+function wall(w,h,d,x,y,z){ const m=makeToon(new THREE.BoxGeometry(w,h,d),'wall',{texKey:'wall'}); m.position.set(x,y,z); scene.add(m); return m; }
+const backWall = wall(TEMPLE.w, TEMPLE.h, 0.5, 0, TEMPLE.h/2, -halfD); // 后墙（神像背后）
+wall(0.5, TEMPLE.h, TEMPLE.d, -TEMPLE.w/2, TEMPLE.h/2, 0);       // 左墙
+wall(0.5, TEMPLE.h, TEMPLE.d,  TEMPLE.w/2, TEMPLE.h/2, 0);       // 右墙
+const ceiling = makeToon(new THREE.BoxGeometry(TEMPLE.w,0.5,TEMPLE.d),'wall',{outline:false});
+ceiling.position.set(0,TEMPLE.h,0); scene.add(ceiling);
+// 前面两侧门柱（让开口居中且足够大）
+wall(2, TEMPLE.h, 0.6, -7, TEMPLE.h/2, halfD);
+wall(2, TEMPLE.h, 0.6,  7, TEMPLE.h/2, halfD);
+// 陶土橙屋顶（style）
+const roof = makeToon(new THREE.BoxGeometry(TEMPLE.w+2,0.6,TEMPLE.d+2),'terra',{texKey:'roof'});
+roof.position.set(0,TEMPLE.h+0.6,0); scene.add(roof);
+const roofPrism = makeToon(new THREE.CylinderGeometry(0.01, (TEMPLE.w+2)/1.6, 2.4, 4),'terra',{outlineScale:1.02});
+roofPrism.rotation.y=Math.PI/4; roofPrism.position.set(0,TEMPLE.h+1.8,0); roofPrism.scale.z=(TEMPLE.d+2)/(TEMPLE.w+2);
+scene.add(roofPrism);
+
+// --- Diorama 娃娃屋切面（让高位斜俯固定机位能俯瞰庙内全貌） ---
+// 相机置于后墙外的后上方，故隐藏会挡住视线的：后墙 + 天花板 + 屋顶。
+// 左右侧墙、地板、门柱、庙门保留，仍是「微缩 diorama」的封闭感。
+const DIORAMA_CUTAWAY = true;
+if(DIORAMA_CUTAWAY){ backWall.visible=false; ceiling.visible=false; roof.visible=false; roofPrism.visible=false; }
+
+// --- 庙门（A1/A2：那一面可开/合，开口足够大） ---
+const door = makeToon(new THREE.BoxGeometry(12, TEMPLE.h, 0.4),'terra',{texKey:'roof'});
+door.position.set(0, TEMPLE.h/2, halfD);
+scene.add(door);
+const DOOR_CLOSED_Y = TEMPLE.h/2;
+const DOOR_OPEN_Y   = TEMPLE.h + 9;   // 向上滑出视野 = 开门
+let doorTarget = DOOR_OPEN_Y;         // 开局白天 = 开
+
+// --- 绿色供奉区（B4 · 可见的绿色区域） ---
+const ZONE = { x:0, z:1.5, w:7, d:5 };
+const zoneMat = new THREE.MeshBasicMaterial({ color:0x6FAE5A, transparent:true, opacity:0.42 });
+const zoneMesh = new THREE.Mesh(new THREE.PlaneGeometry(ZONE.w, ZONE.d), zoneMat);
+zoneMesh.rotation.x = -Math.PI/2; zoneMesh.position.set(ZONE.x,0.04,ZONE.z); scene.add(zoneMesh);
+const zoneEdge = new THREE.LineSegments(
+  new THREE.EdgesGeometry(new THREE.PlaneGeometry(ZONE.w, ZONE.d)),
+  new THREE.LineBasicMaterial({ color:0x3E5A2E }));
+zoneEdge.rotation.x=-Math.PI/2; zoneEdge.position.set(ZONE.x,0.05,ZONE.z); scene.add(zoneEdge);
+
+// --- 神像（诗人的化身）：石像，夜晚可化灵体（C1） ---
+const statue = new THREE.Group();
+const base = makeToon(new THREE.BoxGeometry(2.6,0.8,2.0),'stone'); base.position.y=0.4; statue.add(base);
+const body = makeToon(new THREE.BoxGeometry(1.8,2.6,1.2),'stone'); body.position.y=2.1; statue.add(body);
+const head = makeToon(new THREE.BoxGeometry(1.1,1.1,1.0),'stone'); head.position.y=3.95; statue.add(head);
+const armL = makeToon(new THREE.BoxGeometry(0.4,1.8,0.4),'stone'); armL.position.set(-1.05,2.2,0); armL.rotation.z=0.18; statue.add(armL);
+const armR = makeToon(new THREE.BoxGeometry(0.4,1.8,0.4),'stone'); armR.position.set( 1.05,2.2,0); armR.rotation.z=-0.18; statue.add(armR);
+statue.position.set(0,0,-7);
+scene.add(statue);
+statue.userData.onClick = ()=>{ if(state.phase==='NIGHT') toggleSpirit(); };
+const statueMats = [base,body,head,armL,armR].map(g=>g.userData.mat);
+
+// --- 宠物（诗人昔日宠物后代 · 一条狗），三态：狗 ↔ 面包机 ↔ 唱片机（C7） ---
+const pet = new THREE.Group();
+pet.position.set(3.2,0,-4.4);
+scene.add(pet);
+
+// 狗形态
+const dogForm = new THREE.Group();
+const dBody = makeToon(new THREE.BoxGeometry(1.6,0.9,0.8),'dog'); dBody.position.y=0.95; dogForm.add(dBody);
+const dHead = makeToon(new THREE.BoxGeometry(0.8,0.8,0.8),'dog'); dHead.position.set(0.95,1.25,0); dogForm.add(dHead);
+const dSnout= makeToon(new THREE.BoxGeometry(0.4,0.35,0.45),'paper'); dSnout.position.set(1.4,1.1,0); dogForm.add(dSnout);
+const dEarL = makeToon(new THREE.BoxGeometry(0.18,0.4,0.3),'dog'); dEarL.position.set(0.8,1.7,0.28); dogForm.add(dEarL);
+const dEarR = makeToon(new THREE.BoxGeometry(0.18,0.4,0.3),'dog'); dEarR.position.set(0.8,1.7,-0.28); dogForm.add(dEarR);
+const dTail = makeToon(new THREE.BoxGeometry(0.5,0.18,0.18),'dog'); dTail.position.set(-0.95,1.15,0); dTail.rotation.z=0.6; dogForm.add(dTail);
+for(const lx of [0.5,-0.5]) for(const lz of [0.28,-0.28]){
+  const leg = makeToon(new THREE.BoxGeometry(0.25,0.6,0.25),'dog'); leg.position.set(lx,0.3,lz); dogForm.add(leg);
+}
+pet.add(dogForm);
+
+// 面包机形态（C3）
+const toasterForm = new THREE.Group();
+const tBody = makeToon(new THREE.BoxGeometry(1.8,1.3,1.2),'metal'); tBody.position.y=0.95; toasterForm.add(tBody);
+const tTop  = makeToon(new THREE.BoxGeometry(1.2,0.2,0.4),'ink',{outline:false}); tTop.position.set(0,1.65,0); toasterForm.add(tTop); // 投料口
+const tLever= makeToon(new THREE.BoxGeometry(0.2,0.5,0.2),'terra'); tLever.position.set(-1.0,1.2,0); toasterForm.add(tLever);
+const tFace = makeToon(new THREE.BoxGeometry(0.5,0.5,0.1),'paper'); tFace.position.set(0,0.9,0.62); toasterForm.add(tFace);
+toasterForm.visible=false; pet.add(toasterForm);
+
+// 唱片机形态（C6）
+const playerForm = new THREE.Group();
+const pBox = makeToon(new THREE.BoxGeometry(1.9,0.7,1.6),'metal'); pBox.position.y=0.55; playerForm.add(pBox);
+const pPlatter = makeToon(new THREE.CylinderGeometry(0.7,0.7,0.12,24),'ink'); pPlatter.position.set(-0.15,0.96,0); playerForm.add(pPlatter);
+const pSpindle = makeToon(new THREE.CylinderGeometry(0.05,0.05,0.2,8),'paper',{outline:false}); pSpindle.position.set(-0.15,1.06,0); playerForm.add(pSpindle);
+const pArm = makeToon(new THREE.BoxGeometry(0.7,0.08,0.08),'metal'); pArm.position.set(0.55,1.0,0.35); pArm.rotation.y=-0.6; playerForm.add(pArm);
+playerForm.visible=false; pet.add(playerForm);
+
+pet.userData.onClick = ()=> onPetClick();
+
+/* ============================================================
+ * §F  HUD / DOM 引用 & 交互绑定
+ * ========================================================== */
+const dom = {
+  phaseChip:document.getElementById('phaseChip'),
+  dayChip:document.getElementById('dayChip'),
+  clockChip:document.getElementById('clockChip'),
+  actionBtn:document.getElementById('actionBtn'),
+  hint:document.getElementById('hint'),
+  invItems:document.getElementById('invItems'),
+  dialogue:document.getElementById('dialogue'),
+  npcSay:document.getElementById('npcSay'),
+  replyInput:document.getElementById('replyInput'),
+  replyBtn:document.getElementById('replyBtn'),
+  replyEcho:document.getElementById('replyEcho'),
+  process:document.getElementById('process'),
+  procLab:document.getElementById('procLab'),
+  bar:document.getElementById('bar'),
+  nowPlaying:document.getElementById('nowPlaying'),
+  intro:document.getElementById('intro'),
+};
+
+// 倍速按钮（§6 · 1×/5×/20×）
+document.querySelectorAll('[data-spd]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    state.speed = +b.dataset.spd;
+    document.querySelectorAll('[data-spd]').forEach(x=>x.classList.toggle('on', x===b));
+  });
+});
+// 行动按钮（白天=跳过键 B7；夜晚=进入新一天）
+dom.actionBtn.addEventListener('click', ()=>{
+  if(state.phase==='DAY') endDay(true);
+  else startNewDay();
+});
+// 开场
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  dom.intro.style.display='none'; ensureAudio();
+});
+
+/* ============================================================
+ * §G  游戏状态
+ * ========================================================== */
+const state = {
+  phase:'DAY', day:1, speed:1,
+  dayElapsed:0,                 // 游戏秒
+  spawnTimer:0, nextSpawnIn:0,  // 下一组刷新倒计时
+  offerers:[],                  // 活动中的上贡者
+  offerings:[],                 // 绿色区里的供品 mesh
+  inventory:[],                 // {kind:'material'|'record', label, color, mesh?}
+  selectedMaterial:null,
+  petForm:'dog',                // dog | toaster | player
+  spirit:false,
+  processing:null,              // {elapsed,duration}
+  hasRecord:false,
+  dialogueOpen:false, dialogueNpc:null,
+  camAnim:null,                 // {fromPos,fromLook,toPos,toLook,t,dur,onDone}
+  curLook:CAM_HOME.look.clone(),
+};
+
+/* ============================================================
+ * §H  上贡者系统（B1–B8）
+ * ========================================================== */
+const OFFERING_SHAPES = [
+  ()=>new THREE.IcosahedronGeometry(0.32,0),
+  ()=>new THREE.TorusGeometry(0.24,0.1,8,16),
+  ()=>new THREE.ConeGeometry(0.3,0.5,6),
+  ()=>new THREE.BoxGeometry(0.42,0.42,0.42),
+  ()=>new THREE.DodecahedronGeometry(0.34,0),
+];
+const OFFERING_COLORS = ['sageL','terra','water','sageD','paper','spirit'];
+
+function makeOfferingMesh(){
+  const i = Math.floor(rand(0,OFFERING_SHAPES.length));
+  const ci = Math.floor(rand(0,OFFERING_COLORS.length));
+  const g = makeToon(OFFERING_SHAPES[i](), OFFERING_COLORS[ci], { outlineScale:1.08, texKey:'offering' });
+  g.userData.colorKey = OFFERING_COLORS[ci];
+  return g;
+}
+function rand(a,b){ return a + (b-a)*pseudo(); }
+// 无 Math.random 依赖的简单伪随机（避免环境限制；种子随刷新计数递增）
+let _seed = 1234.5678;
+function pseudo(){ _seed = (_seed*16807) % 2147483647; return (_seed/2147483647); }
+
+let _groupCount = 0;
+function spawnGroup(){
+  const n = Math.round(rand(TUNING.GROUP_MIN, TUNING.GROUP_MAX));
+  _groupCount++;
+  for(let i=0;i<n;i++){
+    // 错落站位（B1：非排队/平行）——绿色区前方扇形散开
+    const sx = rand(-5.5,5.5);
+    const sz = rand(2.5,6.5);
+    const standPos = new THREE.Vector3(sx, 0, sz);
+    const startPos = new THREE.Vector3(sx*1.3, 0, halfD + rand(3,8)); // 庙门外
+    spawnOfferer(startPos, standPos);
+  }
+}
+function spawnOfferer(startPos, standPos){
+  const o = new THREE.Group();
+  // 身体（占位人形，遵守色盘+描边）
+  const robeColor = ['sageD','wall','terra','green','stone'][Math.floor(rand(0,5))];
+  const torso = makeToon(new THREE.CylinderGeometry(0.42,0.55,1.4,7), robeColor); torso.position.y=1.1; o.add(torso);
+  const hd = makeToon(new THREE.SphereGeometry(0.34,12,10),'paper'); hd.position.y=2.05; o.add(hd);
+  const hat= makeToon(new THREE.ConeGeometry(0.5,0.5,7),'terra'); hat.position.y=2.45; o.add(hat);
+  // 手持供品（B2）
+  const item = makeOfferingMesh();
+  item.position.set(0.55,1.25,0.35); o.add(item);
+
+  o.position.copy(startPos);
+  o.lookAt(standPos.x, o.position.y, standPos.z);
+  scene.add(o);
+
+  const off = {
+    grp:o, item, startPos, standPos,
+    phase:'in', t:0, dropped:false, paused:false, dead:false,
+  };
+  o.userData.onClick = ()=> onOffererClick(off);
+  state.offerers.push(off);
+}
+
+function updateOfferer(off, dt){
+  if(off.paused) return;
+  off.t += dt;
+  const p = off.grp.position;
+  if(off.phase==='in'){                       // 走入 ≈5s（B3）
+    const k = Math.min(off.t/TUNING.OFFERER_WALK_IN, 1);
+    p.lerpVectors(off.startPos, off.standPos, easeInOut(k));
+    bob(off, dt);
+    if(k>=1){ off.phase='stay'; off.t=0; off.grp.lookAt(0,off.grp.position.y,-7); }
+  } else if(off.phase==='stay'){              // 停留 ≈10s
+    if(off.t>=TUNING.OFFERER_STAY){ if(!off.dropped) dropOffering(off); off.phase='out'; off.t=0; }
+  } else if(off.phase==='out'){               // 走出 ≈5s
+    const k = Math.min(off.t/TUNING.OFFERER_WALK_OUT, 1);
+    p.lerpVectors(off.standPos, off.startPos, easeInOut(k));
+    bob(off, dt);
+    if(k>=1){ removeOfferer(off); }
+  }
+}
+function bob(off,dt){ off._bt=(off._bt||0)+dt*8; off.grp.position.y = Math.abs(Math.sin(off._bt))*0.08; }
+function easeInOut(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+
+// 供品落入绿色区（B4 / B7：点或不点都会留下其手持那一件）
+function dropOffering(off){
+  if(off.dropped) return;
+  off.dropped = true;
+  const item = off.item;
+  off.grp.remove(item);
+  // 放到绿色区内一个错落位置
+  const gx = ZONE.x + rand(-ZONE.w/2+0.6, ZONE.w/2-0.6);
+  const gz = ZONE.z + rand(-ZONE.d/2+0.6, ZONE.d/2-0.6);
+  item.position.set(gx,0.35,gz);
+  item.userData.onClick = ()=> { if(state.phase==='NIGHT') collectOffering(item); };
+  scene.add(item);
+  state.offerings.push(item);
+}
+function removeOfferer(off){
+  off.dead = true;
+  scene.remove(off.grp);
+  const idx = state.offerers.indexOf(off); if(idx>=0) state.offerers.splice(idx,1);
+}
+
+// 点击上贡者（B4+B5）：放下供品 + 脚本式拉近 + 对话框
+function onOffererClick(off){
+  if(state.phase!=='DAY' || off.dead || state.dialogueOpen) return;
+  if(!off.dropped) dropOffering(off);
+  // 脚本式推近镜头（§2 例外允许）
+  off.paused = true;
+  state.dialogueNpc = off;
+  const target = off.grp.position.clone();
+  const camPos = target.clone().add(new THREE.Vector3(0,1.7,-3.2));
+  flyCamera(camPos, new THREE.Vector3(target.x,1.5,target.z), 0.6, ()=> openDialogue(off));
+}
+function openDialogue(off){
+  state.dialogueOpen = true;
+  dom.npcSay.textContent = pickGreeting();
+  dom.replyEcho.textContent='';
+  dom.replyInput.value='';
+  dom.dialogue.style.display='block';
+  dom.replyInput.focus();
+}
+const GREETINGS = ['你好…','愿神像庇佑。','我带来了一点心意。','今日风和日丽呢。','请收下这份供奉。','远道而来，特来参拜。'];
+function pickGreeting(){ return GREETINGS[Math.floor(rand(0,GREETINGS.length))]; }
+
+// B5：输入只做接受与显示，不接任何 AI、不做处理
+function submitReply(){
+  const txt = dom.replyInput.value.trim();
+  dom.replyEcho.textContent = txt ? `你回应：「${txt}」` : '（你沉默以对）';
+  setTimeout(closeDialogue, 700);
+}
+dom.replyBtn.addEventListener('click', submitReply);
+dom.replyInput.addEventListener('keydown', e=>{ if(e.key==='Enter') submitReply(); });
+function closeDialogue(){
+  if(!state.dialogueOpen) return;
+  state.dialogueOpen = false;
+  dom.dialogue.style.display='none';
+  const off = state.dialogueNpc; state.dialogueNpc=null;
+  if(off){ off.paused=false; if(off.phase==='stay') off.t=Math.max(off.t,TUNING.OFFERER_STAY*0.6); }
+  flyCamera(CAM_HOME.pos.clone(), CAM_HOME.look.clone(), 0.6); // 本轮结束自动归位
+}
+
+/* ============================================================
+ * §I  昼夜切换（A2/A3 / C1）
+ * ========================================================== */
+function endDay(skipped){
+  if(state.phase!=='DAY') return;
+  state.phase='NIGHT';
+  // 让仍在场的上贡者把供品留下并撤离（B7：跳过时不弹对话框）
+  for(const off of [...state.offerers]){
+    if(!off.dropped) dropOffering(off);
+    removeOfferer(off);
+  }
+  if(state.dialogueOpen) closeDialogue();
+  doorTarget = DOOR_CLOSED_Y;                 // 庙门合上
+  // 灯光切夜晚
+  sun.intensity = 0.12; ambient.intensity = 0.28;
+  interior.intensity = 1.5; interior2.intensity = 1.1;
+  scene.background = new THREE.Color(0x2b3640);
+  scene.fog.color = new THREE.Color(0x2b3640);
+  updateHud(); updateHint();
+}
+function startNewDay(){
+  if(state.phase!=='NIGHT') return;
+  // 重置夜晚产出链
+  state.day++;
+  state.phase='DAY';
+  state.dayElapsed=0; state.spawnTimer=0; state.nextSpawnIn=0;
+  setSpirit(false);
+  setPetForm('dog');
+  state.processing=null; state.hasRecord=false; state.selectedMaterial=null;
+  // 清掉残留供品
+  for(const it of [...state.offerings]) scene.remove(it);
+  state.offerings.length=0;
+  // 清掉夜晚产物（保留？这里每日清空以便链路重复演示）
+  state.inventory = state.inventory.filter(()=>false);
+  renderInventory();
+  doorTarget = DOOR_OPEN_Y;
+  sun.intensity=1.7; ambient.intensity=0.85; interior.intensity=0; interior2.intensity=0;
+  scene.background = C('sky'); scene.fog.color = C('sky');
+  dom.process.style.display='none'; dom.nowPlaying.style.display='none';
+  updateHud(); updateHint();
+}
+
+/* ---- 神像灵体形态（C1） ---- */
+function toggleSpirit(){ setSpirit(!state.spirit); }
+function setSpirit(on){
+  state.spirit = on;
+  for(const m of statueMats){
+    if(on){ m.color = C('spirit'); m.emissive = C('spirit'); m.emissiveIntensity=0.6; m.transparent=true; m.opacity=0.72; }
+    else  { m.color = C('stone');  m.emissiveIntensity=0; m.transparent=false; m.opacity=1; }
+    m.needsUpdate=true;
+  }
+  updateHint();
+}
+
+/* ============================================================
+ * §J  夜晚 · 回收与加工（C2–C7）
+ * ========================================================== */
+function collectOffering(item){
+  const idx = state.offerings.indexOf(item); if(idx<0) return;
+  state.offerings.splice(idx,1);
+  scene.remove(item);
+  state.inventory.push({ kind:'material', label:'供品', color:item.userData.colorKey||'sageL' });
+  renderInventory(); updateHint();
+}
+function collectAll(){
+  for(const it of [...state.offerings]) collectOffering(it);
+}
+
+function onPetClick(){
+  if(state.phase!=='NIGHT'){ return; } // 宠物加工只在夜晚（白天它就趴着）
+  // 1) 若绿色区还有供品 → 宠物帮忙拾取（C2：点宠物触发拾取）
+  if(state.offerings.length>0){ collectAll(); return; }
+  // 2) 否则在三态间推进
+  if(state.petForm==='dog'){
+    setPetForm('toaster');
+  } else if(state.petForm==='toaster'){
+    if(state.processing){ return; } // 加工中不切换
+    // 有选中材料 → 投料加工（C4）；否则切到唱片机（需已有唱片）
+    if(state.selectedMaterial){ startProcessing(); }
+    else if(state.hasRecord){ setPetForm('player'); }
+    else { flash(dom.procLab,'请先在物品栏选一件材料投料'); pulseProcessHint(); }
+  } else if(state.petForm==='player'){
+    if(state.hasRecord) playRecord();
+    else setPetForm('dog');
+  }
+  updateHint();
+}
+function setPetForm(f){
+  state.petForm=f;
+  dogForm.visible    = (f==='dog');
+  toasterForm.visible= (f==='toaster');
+  playerForm.visible = (f==='player');
+  updateHint();
+}
+
+// C4：投料 → 50s → 产出唱片
+function startProcessing(){
+  if(!state.selectedMaterial) return;
+  // 消耗该材料
+  const i = state.inventory.indexOf(state.selectedMaterial);
+  if(i>=0) state.inventory.splice(i,1);
+  state.selectedMaterial=null; renderInventory();
+  state.processing = { elapsed:0, duration:TUNING.NIGHT_PROCESS };
+  dom.process.style.display='block';
+  dom.procLab.textContent='面包机加工中…（投料 → 唱片）';
+  updateHint();
+}
+function finishProcessing(){
+  state.processing=null;
+  dom.process.style.display='none';
+  // 产出唱片放到面包机口前，玩家拾取（C5）
+  spawnRecordPickup();
+  updateHint();
+}
+let recordPickup=null;
+function spawnRecordPickup(){
+  const r = makeToon(new THREE.CylinderGeometry(0.5,0.5,0.08,24),'ink',{outlineScale:1.06,texKey:'record'});
+  const label = makeToon(new THREE.CylinderGeometry(0.16,0.16,0.09,16),'terra',{outline:false});
+  r.add(label);
+  r.position.copy(pet.position).add(new THREE.Vector3(0,1.9,1.2));
+  r.userData.onClick = ()=> pickupRecord();
+  scene.add(r); recordPickup=r;
+  state._recordFloat=0;
+}
+function pickupRecord(){
+  if(!recordPickup) return;
+  scene.remove(recordPickup); recordPickup=null;
+  state.hasRecord=true;
+  state.inventory.push({ kind:'record', label:'唱片', color:'ink' });
+  renderInventory(); updateHint();
+}
+
+/* ---- C6：唱片机播放（WebAudio 合成音 + 可见反馈） ---- */
+let audioCtx=null;
+function ensureAudio(){
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+}
+let playing=false;
+function playRecord(){
+  ensureAudio();
+  if(!audioCtx) return;
+  playing=true; state._spinBoost=1;
+  dom.nowPlaying.style.display='block';
+  const now = audioCtx.currentTime;
+  const melody = [261.6,329.6,392.0,523.2,392.0,329.6,440.0,392.0]; // 一段柔和小调
+  const master = audioCtx.createGain(); master.gain.value=0.25; master.connect(audioCtx.destination);
+  melody.forEach((f,i)=>{
+    const o=audioCtx.createOscillator(); const g=audioCtx.createGain();
+    o.type='triangle'; o.frequency.value=f; o.connect(g); g.connect(master);
+    const t=now+i*0.34;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(0.9,t+0.04);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.32);
+    o.start(t); o.stop(t+0.34);
+  });
+  const dur = melody.length*0.34;
+  setTimeout(()=>{ playing=false; dom.nowPlaying.style.display='none'; }, dur*1000+150);
+}
+
+/* ============================================================
+ * §K  物品栏 UI 渲染（C2/C5）
+ * ========================================================== */
+const COLOR_HEX = k => assetConfig.colors[k] || '#cccccc';
+function renderInventory(){
+  dom.invItems.innerHTML='';
+  if(state.inventory.length===0){
+    dom.invItems.innerHTML = '<span class="empty">（空）夜晚回收供品后显示</span>';
+    return;
+  }
+  state.inventory.forEach(it=>{
+    const el = document.createElement('div');
+    el.className = 'item' + (it.kind==='record'?' record':'') + (it===state.selectedMaterial?' sel':'');
+    el.innerHTML = `<span class="dot" style="background:${COLOR_HEX(it.color)}"></span>${it.label}${it.kind==='record'?' ♪':''}`;
+    el.addEventListener('click', ()=>{
+      if(it.kind==='material'){
+        state.selectedMaterial = (state.selectedMaterial===it)?null:it;
+        renderInventory(); updateHint();
+      }
+    });
+    dom.invItems.appendChild(el);
+  });
+}
+
+/* ============================================================
+ * §L  镜头控制（脚本式推近 + 自动归位）
+ * ========================================================== */
+function flyCamera(toPos, toLook, dur, onDone){
+  state.camAnim = {
+    fromPos:camera.position.clone(), fromLook:state.curLook.clone(),
+    toPos, toLook, t:0, dur, onDone,
+  };
+}
+function updateCamera(dtReal){
+  const a = state.camAnim; if(!a) return;
+  a.t += dtReal;
+  const k = Math.min(a.t/a.dur,1);
+  const e = easeInOut(k);
+  camera.position.lerpVectors(a.fromPos, a.toPos, e);
+  state.curLook.lerpVectors(a.fromLook, a.toLook, e);
+  camera.lookAt(state.curLook);
+  if(k>=1){ const d=a.onDone; state.camAnim=null; if(d) d(); }
+}
+
+/* ============================================================
+ * §M  点击拾取（raycast）
+ * ========================================================== */
+const ray = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+function findClickable(obj){ while(obj){ if(obj.userData && obj.userData.onClick) return obj; obj=obj.parent; } return null; }
+renderer.domElement.addEventListener('pointerdown', e=>{
+  if(state.dialogueOpen) return;            // 对话中不响应世界点击
+  if(dom.intro.style.display!=='none') return;
+  pointer.x = (e.clientX/innerWidth)*2-1;
+  pointer.y = -(e.clientY/innerHeight)*2+1;
+  ray.setFromCamera(pointer, camera);
+  const hits = ray.intersectObjects(scene.children, true);
+  for(const h of hits){
+    const t = findClickable(h.object);
+    if(t){ t.userData.onClick(); break; }
+  }
+});
+
+/* ============================================================
+ * §N  HUD / 提示更新
+ * ========================================================== */
+function fmt(sec){ sec=Math.max(0,Math.ceil(sec)); const m=Math.floor(sec/60), s=sec%60; return `${m}:${s.toString().padStart(2,'0')}`; }
+function updateHud(){
+  const isDay = state.phase==='DAY';
+  dom.phaseChip.textContent = isDay?'☀️ 白天':'🌙 夜晚';
+  dom.phaseChip.className = 'chip ' + (isDay?'day':'night');
+  dom.dayChip.textContent = `第 ${state.day} 天`;
+  if(isDay){ dom.clockChip.style.display=''; dom.clockChip.textContent = `剩余 ${fmt(TUNING.DAY_WINDOW-state.dayElapsed)}`; }
+  else dom.clockChip.style.display='none';
+  dom.actionBtn.textContent = isDay ? '⏭ 跳过白天' : `🌅 进入第 ${state.day+1} 天`;
+}
+function updateHint(){
+  let h='';
+  if(state.phase==='DAY'){
+    h = '☀️ <b>白天</b>：上贡者成群而来。<b>点击上贡者</b> → 供品入绿色区 + 拉近对话；不点也会自动留供。倍速可加速，或按 <b>⏭ 跳过白天</b> 进入夜晚。';
+  } else {
+    if(!state.spirit) h='🌙 <b>夜晚</b>：先<b>点击神像</b>化为灵体（可选），';
+    else h='🌙 <b>夜晚</b>：';
+    if(state.offerings.length>0) h+=`<b>点击绿色区供品</b>或<b>点击宠物</b>回收（剩 ${state.offerings.length} 件）。`;
+    else if(state.processing) h+='面包机加工中，请等待进度条…';
+    else if(recordPickup) h+='<b>点击漂浮的唱片</b>拾取入物品栏。';
+    else if(state.petForm==='dog') h+='供品已回收。<b>点击宠物（狗）</b> → 变面包机。';
+    else if(state.petForm==='toaster' && !state.hasRecord) h+='在物品栏<b>选一件材料</b> → <b>点击面包机</b>投料（约50s 出唱片）。';
+    else if(state.petForm==='toaster' && state.hasRecord) h+='已有唱片。<b>点击面包机</b> → 变唱片机。';
+    else if(state.petForm==='player') h+='<b>点击唱片机</b>播放唱片（有声）。完成后按 <b>🌅 进入第N天</b>。';
+    h+=' ';
+  }
+  dom.hint.innerHTML = h;
+}
+function flash(el,msg){ const o=el.textContent; el.textContent=msg; setTimeout(()=>el.textContent=o,1200); }
+function pulseProcessHint(){ dom.process.style.display='block'; setTimeout(()=>{ if(!state.processing) dom.process.style.display='none'; },1200); }
+
+/* ============================================================
+ * §O  主循环
+ * ========================================================== */
+let last = performance.now();
+function animate(now){
+  requestAnimationFrame(animate);
+  const dtReal = Math.min((now-last)/1000, 0.05); last = now;
+  const dt = dtReal * state.speed;               // 游戏时间 = 真实 × 倍速
+
+  // 门开合动画
+  door.position.y += (doorTarget - door.position.y) * Math.min(dtReal*3,1);
+
+  // 镜头
+  if(state.camAnim) updateCamera(dtReal);
+  else if(state.phase==='DAY' && !state.dialogueOpen){ camera.position.copy(CAM_HOME.pos); state.curLook.copy(CAM_HOME.look); camera.lookAt(state.curLook); }
+  // 对话打开时镜头保持在脚本特写位（不复位），关闭后由 flyCamera 归位
+
+  if(state.phase==='DAY' && dom.intro.style.display==='none'){
+    // 白天计时（A3：窗口耗尽自动结束）
+    state.dayElapsed += dt;
+    state.spawnTimer -= dt;
+    if(state.spawnTimer<=0){
+      spawnGroup();
+      state.spawnTimer = rand(TUNING.SPAWN_MIN, TUNING.SPAWN_MAX);
+    }
+    for(const off of [...state.offerers]) updateOfferer(off, dt);
+    if(state.dayElapsed>=TUNING.DAY_WINDOW){ endDay(false); }
+    if((animate._hudT=(animate._hudT||0)+dtReal)>0.2){ animate._hudT=0; updateHud(); }
+  }
+
+  if(state.phase==='NIGHT'){
+    if(state.processing){
+      state.processing.elapsed += dt;
+      const k = Math.min(state.processing.elapsed/state.processing.duration,1);
+      dom.bar.style.width = (k*100).toFixed(1)+'%';
+      // 面包机加工时轻微抖动反馈
+      pet.position.x = 3.2 + Math.sin(now*0.03)*0.04;
+      if(k>=1) finishProcessing();
+    }
+    // 唱片拾取漂浮
+    if(recordPickup){ state._recordFloat+=dtReal; recordPickup.position.y = pet.position.y+1.9+Math.sin(state._recordFloat*2)*0.12; recordPickup.rotation.y+=dtReal*1.2; }
+    // 唱片机转盘旋转（播放时加速 = 可见反馈）
+    if(state.petForm==='player'){ pPlatter.rotation.y += dtReal*(playing?9:1.2); }
+    // 灵体轻微浮动
+    if(state.spirit){ statue.position.y = Math.sin(now*0.002)*0.12; } else statue.position.y=0;
+  }
+
+  // 宠物（狗）尾巴摆动（白天趴着也活泼）
+  if(state.petForm==='dog'){ dTail.rotation.z = 0.6 + Math.sin(now*0.012)*0.4; }
+
+  renderer.render(scene, camera);
+}
+
+/* ============================================================
+ * §P  启动
+ * ========================================================== */
+state.nextSpawnIn=0; state.spawnTimer=0;
+renderInventory(); updateHud(); updateHint();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
