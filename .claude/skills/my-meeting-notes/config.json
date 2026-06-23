@@ -1,0 +1,17 @@
+{
+  "source_dir": "D:/保存文件/OBS",
+  "obsidian_dir": "C:/Users/hsxx1/Documents/Obsidian Vault/Atlas",
+  "whisper": {
+    "model": "medium",
+    "language": "Chinese",
+    "device": "cuda",
+    "note": "必须 GPU。model 可按需 small(更快) / large-v3(更准)。"
+  },
+  "obsidian_frontmatter": {
+    "project": "[[神像供奉AI]]",
+    "tags": ["游戏设计", "会议纪要"]
+  },
+  "local_outputs": ["<原名>_audio.txt", "<原名>_会议总结.md"],
+  "obsidian_note_name": "神像供奉游戏 · 会议纪要 <YYYY-MM-DD>.md",
+  "roster_source": "代号↔板块↔真名的映射在【项目记忆 team-structure.md】，本文件不存真名，避免随仓库泄露。"
+}
