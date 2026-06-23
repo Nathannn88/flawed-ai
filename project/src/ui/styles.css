@@ -1,0 +1,382 @@
+:root {
+  --bg: #1a1714;
+  --temple-day: #efe6d0;
+  --temple-night: #2b2a3a;
+  --ink: #2a2018;
+  --accent: #c9a227;
+  --green: #6fae6f;
+  --green-soft: #d8ecd0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+  background: var(--bg);
+  color: #f3ecde;
+}
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.topbar h1 {
+  font-size: 20px;
+  margin: 0;
+  color: var(--accent);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.phase {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+.phase.day {
+  background: #f5e6b8;
+  color: #5a4a16;
+}
+.phase.night {
+  background: #3a3960;
+  color: #cfd0ff;
+}
+
+.faith {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 8px 14px;
+  background: var(--accent);
+  color: #2a2008;
+  font-weight: 600;
+  font-size: 14px;
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.stage-wrap {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  margin-top: 16px;
+}
+@media (max-width: 820px) {
+  .stage-wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── 庙宇（固定视角的长方体空间）── */
+.temple {
+  position: relative;
+  min-height: 460px;
+  border-radius: 14px;
+  padding: 22px;
+  transition: background 0.6s ease;
+  overflow: hidden;
+}
+.temple.day {
+  background: linear-gradient(180deg, #f7eecf, var(--temple-day));
+  color: var(--ink);
+}
+.temple.night {
+  background: linear-gradient(180deg, #23223a, var(--temple-night));
+  color: #e7e7ff;
+}
+
+/* 一面墙的开/合（昼夜） */
+.door {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 26px;
+  height: 100%;
+  transition: transform 0.6s ease, background 0.6s ease;
+  transform-origin: right center;
+}
+.door.closed {
+  background: repeating-linear-gradient(45deg, #4a4760, #4a4760 8px, #3c3a52 8px, #3c3a52 16px);
+  transform: scaleX(1);
+}
+.door.open {
+  background: linear-gradient(90deg, transparent, rgba(255, 240, 200, 0.5));
+  transform: scaleX(0.3);
+}
+
+.scene {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100%;
+}
+
+.zone-label {
+  font-size: 12px;
+  opacity: 0.7;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.green-zone {
+  border: 2px dashed var(--green);
+  background: rgba(111, 174, 111, 0.14);
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 64px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.empty {
+  opacity: 0.5;
+  font-size: 13px;
+}
+
+.chip {
+  background: var(--green-soft);
+  color: #2f4a2f;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-weight: 600;
+}
+.chip.clickable {
+  background: var(--green);
+  color: #143014;
+}
+
+/* 人群 */
+.crowd {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 8px 0;
+}
+.hint {
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+.worshipper {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 72px;
+  animation: walkIn 0.6s ease;
+  transition: transform 0.6s ease, opacity 0.6s ease;
+}
+.worshipper .avatar {
+  font-size: 30px;
+}
+.worshipper .wname {
+  font-size: 13px;
+  font-weight: 600;
+}
+.worshipper .held {
+  font-size: 16px;
+}
+.worshipper.leaving {
+  transform: translateY(48px) scale(0.6);
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes walkIn {
+  from {
+    transform: translateY(48px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+}
+
+/* 夜晚 */
+.deity-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex: 1;
+}
+.deity,
+.pet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.deity {
+  color: inherit;
+}
+.deity-emoji {
+  font-size: 44px;
+}
+.deity small {
+  opacity: 0.7;
+}
+
+.pet {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: inherit;
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+.pet-emoji {
+  font-size: 44px;
+}
+.pet-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.machine-panel {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.machine-panel .load {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.machine-panel em {
+  opacity: 0.7;
+  font-size: 13px;
+}
+.playing {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.progress {
+  position: relative;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 999px;
+  height: 26px;
+  overflow: hidden;
+}
+.progress .bar {
+  height: 100%;
+  background: linear-gradient(90deg, #c9a227, #e6c64a);
+  transition: width 0.25s linear;
+}
+.progress .pct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #fff;
+}
+
+/* 侧栏 */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.inv,
+.log {
+  background: #221f1a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+}
+.inv h2,
+.log h2 {
+  font-size: 15px;
+  margin: 0 0 10px;
+  color: var(--accent);
+}
+.inv-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.inv-label {
+  width: 36px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+.items {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.items .item {
+  font-size: 20px;
+}
+.items em {
+  opacity: 0.4;
+  font-size: 13px;
+}
+
+.log ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.log li {
+  font-size: 13px;
+  opacity: 0.6;
+  line-height: 1.4;
+}
+.log li.latest {
+  opacity: 1;
+  color: #f3ecde;
+}
