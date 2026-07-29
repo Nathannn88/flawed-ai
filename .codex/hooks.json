@@ -1,0 +1,31 @@
+{
+    "description":  "flawed-ai 项目记录同步守卫（Codex 迁移版）",
+    "hooks":  {
+                  "SessionStart":  [
+                                       {
+                                           "matcher":  "startup|resume",
+                                           "hooks":  [
+                                                         {
+                                                             "type":  "command",
+                                                             "command":  "node \"$(git rev-parse --show-toplevel)/.codex/hooks/session-record-ctx.js\"",
+                                                             "timeout":  15,
+                                                             "statusMessage":  "加载项目记录提醒"
+                                                         }
+                                                     ]
+                                       }
+                                   ],
+                  "PreToolUse":  [
+                                     {
+                                         "matcher":  "^Bash$",
+                                         "hooks":  [
+                                                       {
+                                                           "type":  "command",
+                                                           "command":  "node \"$(git rev-parse --show-toplevel)/.codex/hooks/record-guard.js\"",
+                                                           "timeout":  15,
+                                                           "statusMessage":  "检查提交记录同步状态"
+                                                       }
+                                                   ]
+                                     }
+                                 ]
+              }
+}
