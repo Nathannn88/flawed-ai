@@ -34,6 +34,7 @@ next-env.d.ts
 # IDE
 .vscode/
 .idea/
+**/.obsidian/
 
 # OS
 .DS_Store
@@ -42,3 +43,10 @@ Thumbs.db
 # Vercel deploy (独立仓库 Nathannn88/flawed-ai-vercel)
 project/vercel-deploy/
 .gstack/
+
+# Local design export snapshot; canonical sources live under design/.
+/design.zip
+
+# Private legal filings and signed materials stay local in this public repository.
+法律文件/*
+!法律文件/合伙人知识产权、保密与竞业限制协议.md

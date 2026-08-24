@@ -12,7 +12,7 @@ export const initialState: GameState = {
   pet: { form: 'dog', processing: null, output: null },
   faith: 0,
   seq: 1,
-  log: ['☀️ 白天·开门——点击「召集信众」，看看谁来上贡。'],
+  log: ['☀️ 白天·开门——点击「召集信众」，看看谁来上供。'],
 };
 
 export function formName(f: PetForm): string {

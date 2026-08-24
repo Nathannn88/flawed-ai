@@ -54,7 +54,7 @@ function DayScene({ state, dispatch }: SceneProps) {
       </div>
 
       <div className="crowd">
-        {state.worshippers.length === 0 && <p className="hint">点击下方「召集信众」，看看谁来上贡。</p>}
+        {state.worshippers.length === 0 && <p className="hint">点击下方「召集信众」，看看谁来上供。</p>}
         {state.worshippers.map((w) => (
           <WorshipperView
             key={w.id}

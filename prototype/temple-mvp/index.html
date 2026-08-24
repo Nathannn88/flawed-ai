@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>庙宇供奉 · Temple MVP</title>
+<title>诗人与岛 · 庙宇供奉可玩原型</title>
 <style>
   /* ============ 全局 · 东方治愈基调（去饱和柔光） ============ */
   :root{
@@ -37,6 +37,16 @@
   .btn:active{ transform:translateY(1px); box-shadow:1px 1px 0 rgba(46,58,56,.35); }
   .btn.on{ background:var(--terra); color:var(--paper); }
   .spd{ display:flex; gap:6px; }
+  #viewDock{ position:fixed; top:64px; left:14px; z-index:11; display:flex; flex-wrap:wrap;
+    gap:7px; max-width:min(760px,calc(100vw - 28px)); padding:8px;
+    border:2px solid rgba(46,58,56,.72); border-radius:14px;
+    background:rgba(218,205,180,.78); backdrop-filter:blur(6px); }
+  #viewDock .btn{ font-size:12px; padding:6px 9px; box-shadow:none; }
+  #viewDock .btn.on{ background:var(--terra); color:var(--paper); }
+  #movementHelp{ position:fixed; top:64px; left:14px; z-index:11; display:none;
+    padding:8px 12px; border:2px solid var(--ink); border-radius:12px;
+    background:rgba(46,58,56,.86); color:var(--paper); font-size:12px;
+    letter-spacing:.4px; pointer-events:none; }
   #hint{ position:fixed; left:14px; bottom:14px; max-width:46%; z-index:10; pointer-events:none;
     background:var(--panel); color:var(--paper); border:2px solid var(--ink);
     border-radius:12px; padding:10px 14px; font-size:14px; line-height:1.5;
@@ -44,7 +54,7 @@
   #hint b{ color:#F2D9A0; }
 
   /* ============ 物品栏 / 保管处（C2/C5 可见 UI） ============ */
-  #inventory{ position:fixed; right:14px; bottom:14px; z-index:10; width:230px;
+  #inventory{ position:fixed; right:14px; bottom:14px; z-index:10; width:270px;
     background:var(--panel); color:var(--paper); border:2px solid var(--ink);
     border-radius:12px; padding:10px 12px; box-shadow:2px 2px 0 rgba(46,58,56,.35); }
   #inventory h4{ margin:0 0 8px; font-size:13px; letter-spacing:1px; opacity:.9; }
@@ -54,7 +64,8 @@
     display:flex; align-items:center; gap:6px; user-select:none; }
   .item .dot{ width:12px; height:12px; border-radius:50%; border:1.5px solid var(--ink); }
   .item.sel{ background:var(--terra); border-color:#F2D9A0; }
-  .item.record{ border-radius:50%; padding:6px 10px; }
+  .item.collectible{ border-radius:14px; padding:6px 10px; border-color:#F2D9A0; }
+  .item.collectible::after{ content:"检视"; opacity:.62; font-size:10px; margin-left:2px; }
   .empty{ opacity:.55; font-size:12px; }
 
   /* ============ 对话框（B5） ============ */
@@ -85,6 +96,103 @@
     border-radius:12px; padding:8px 16px; font-weight:800; letter-spacing:2px;
     box-shadow:2px 2px 0 rgba(46,58,56,.35); }
 
+  /* ============ 收藏品检视（独立 3D 舞台） ============ */
+  #inspect{ position:fixed; inset:0; z-index:45; display:none; align-items:center;
+    justify-content:center; background:rgba(20,28,29,.92); color:var(--paper); }
+  #inspectPanel{ width:min(920px,94vw); height:min(680px,90vh); display:grid;
+    grid-template-rows:auto minmax(0,1fr) auto; border:2px solid rgba(218,205,180,.55);
+    border-radius:20px; overflow:hidden; background:linear-gradient(145deg,#253231,#101718);
+    box-shadow:0 24px 80px rgba(0,0,0,.45); }
+  #inspectHead{ display:flex; align-items:flex-start; justify-content:space-between; gap:20px;
+    padding:18px 20px 10px; }
+  #inspectTitle{ margin:0; font-size:21px; letter-spacing:1px; }
+  #inspectMeta{ margin:5px 0 0; opacity:.66; font-size:12px; }
+  #inspectStage{ position:relative; min-height:0; touch-action:none; cursor:grab; }
+  #inspectStage.dragging{ cursor:grabbing; }
+  #inspectStage canvas{ position:absolute; inset:0; width:100%; height:100%; }
+  #inspectHelp{ position:absolute; left:16px; bottom:12px; font-size:12px; opacity:.62;
+    pointer-events:none; z-index:2; }
+  #inspectFoot{ display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between;
+    align-items:center; padding:12px 18px 16px; border-top:1px solid rgba(218,205,180,.22); }
+  #inspectStatus{ min-height:18px; font-size:12px; color:#F2D9A0; }
+  #inspectActions{ display:flex; flex-wrap:wrap; gap:8px; }
+  #inspect .btn{ display:inline-flex; align-items:center; }
+
+  /* ============ 共鸣结果甄选（无倒计时，左右拖 + 等价按钮） ============ */
+  #resonanceReveal{ position:fixed; inset:0; z-index:44; display:none; align-items:center;
+    justify-content:center; padding:24px; background:rgba(18,27,29,.9); color:var(--paper); }
+  #resonanceCard{ position:relative; width:min(760px,94vw); min-height:min(620px,86vh);
+    display:grid; grid-template-rows:auto 1fr auto; overflow:hidden; touch-action:none;
+    border:2px solid rgba(218,205,180,.62); border-radius:24px;
+    background:radial-gradient(circle at 50% 24%,rgba(125,177,172,.22),transparent 42%),
+      linear-gradient(145deg,#263735,#121a1b); box-shadow:0 28px 90px rgba(0,0,0,.52);
+    transition:transform .2s ease,opacity .2s ease; }
+  #resonanceCard.dragging{ transition:none; }
+  #resonanceHead{ display:flex; justify-content:space-between; align-items:flex-start;
+    gap:18px; padding:22px 24px 12px; }
+  #resonanceRarity{ font-size:12px; letter-spacing:2px; color:#F2D9A0; }
+  #resonanceArtwork{ display:grid; align-content:center; justify-items:center; text-align:center;
+    gap:14px; padding:22px 48px; }
+  #resonanceArtworkMark{ width:120px; height:120px; display:grid; place-items:center;
+    border-radius:38% 62% 55% 45%; border:2px solid rgba(218,205,180,.65);
+    background:var(--art-accent,#7DB1AC); box-shadow:inset 0 0 0 14px rgba(20,28,29,.18); }
+  #resonanceArtworkMark::before{ content:""; width:44px; height:44px; border:3px solid var(--paper);
+    transform:rotate(45deg); opacity:.75; }
+  #resonanceArtwork h2{ margin:0; font-size:28px; font-weight:650; }
+  #resonanceArtwork p{ margin:0; max-width:560px; line-height:1.75; opacity:.8; }
+  #resonanceCarrier{ color:#F2D9A0; font-size:13px; cursor:pointer; text-decoration:underline;
+    text-underline-offset:4px; }
+  #resonanceActions{ display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:18px 24px 24px;
+    border-top:1px solid rgba(218,205,180,.2); }
+  #resonanceActions .btn{ min-height:48px; justify-content:center; }
+  #returnMemory{ background:#c9b79b; }
+  #keepMemory{ background:#8fb5a6; }
+  #swipeCueLeft,#swipeCueRight{ position:absolute; top:50%; transform:translateY(-50%);
+    writing-mode:vertical-rl; letter-spacing:2px; opacity:.48; font-size:12px; pointer-events:none; }
+  #swipeCueLeft{ left:10px; } #swipeCueRight{ right:10px; }
+
+  /* ============ 夜间记忆空间（可扩展多格背包） ============ */
+  #memorySpace{ position:fixed; inset:0; z-index:43; display:none; color:var(--paper);
+    background:radial-gradient(circle at 50% 0,rgba(90,133,129,.28),transparent 35%),
+      linear-gradient(#172322,#0d1415); overflow:auto; }
+  #memorySpacePanel{ width:min(1180px,94vw); min-height:100%; margin:0 auto; padding:26px 0 48px; }
+  #memorySpaceHead{ position:sticky; top:0; z-index:2; display:flex; justify-content:space-between;
+    gap:20px; align-items:flex-start; padding:12px 0 18px;
+    background:linear-gradient(#172322 72%,transparent); }
+  #memorySpaceTitle{ margin:0; font-size:26px; }
+  #memorySpaceHead p{ margin:6px 0 0; opacity:.62; font-size:13px; }
+  #memoryTools{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:18px; }
+  #memoryTools select{ min-height:44px; border:2px solid rgba(218,205,180,.55); border-radius:12px;
+    padding:8px 12px; background:#263533; color:var(--paper); font:inherit; }
+  #memoryGrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; }
+  .memory-slot{ min-height:190px; display:grid; grid-template-rows:90px auto; cursor:pointer;
+    border:2px solid rgba(218,205,180,.26); border-radius:16px; overflow:hidden;
+    background:rgba(218,205,180,.06); color:inherit; font:inherit; text-align:left; padding:0;
+    appearance:none; transition:transform .12s ease,border-color .12s ease; }
+  .memory-slot:hover,.memory-slot:focus-visible{ transform:translateY(-2px);
+    border-color:rgba(242,217,160,.8); outline:none; }
+  .memory-thumb{ display:grid; place-items:center; position:relative; background:var(--slot-accent,#496b67); }
+  .memory-thumb::before{ content:""; width:52px; height:52px; border-radius:50% 35% 50% 40%;
+    border:3px solid rgba(242,242,236,.7); box-shadow:inset 0 0 0 9px rgba(20,28,29,.2); }
+  .memory-badge{ position:absolute; top:8px; right:8px; font-size:10px; padding:3px 6px;
+    border-radius:999px; background:rgba(20,28,29,.72); }
+  .memory-copy{ padding:11px 12px 13px; }
+  .memory-copy strong{ display:block; line-height:1.35; font-size:13px; }
+  .memory-copy span{ display:block; margin-top:6px; font-size:11px; opacity:.62; }
+  #memoryEmpty{ display:none; padding:54px 20px; text-align:center; opacity:.64;
+    border:2px dashed rgba(218,205,180,.28); border-radius:18px; }
+  @media(max-width:700px){
+    #inventory{ width:min(92vw,360px); }
+    #hint{ max-width:calc(100vw - 28px); bottom:150px; }
+    #resonanceArtwork{ padding:18px 30px; }
+    #resonanceArtwork h2{ font-size:22px; }
+    #memorySpacePanel{ width:92vw; }
+    #memoryGrid{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+    .memory-slot{ min-height:155px; }
+    #viewDock{ top:102px; }
+    #movementHelp{ top:102px; }
+  }
+
   #intro{ position:fixed; inset:0; z-index:50; display:flex; align-items:center;
     justify-content:center; background:rgba(46,58,56,.55); backdrop-filter:blur(2px); }
   #introCard{ background:var(--paper); border:3px solid var(--ink); border-radius:18px;
@@ -102,13 +210,24 @@
   <span id="phaseChip" class="chip day">☀️ 白天</span>
   <span id="dayChip" class="chip">第 1 天</span>
   <span id="clockChip" class="chip">剩余 20:00</span>
+  <span id="energyChip" class="chip">✦ 记忆能量 0</span>
+  <span id="roomChip" class="chip">神像视角 · 祈愿厅</span>
   <div class="spd">
     <span class="btn on" data-spd="1">1×</span>
     <span class="btn" data-spd="5">5×</span>
     <span class="btn" data-spd="20">20×</span>
   </div>
+  <span id="memorySpaceBtn" class="btn" style="display:none">记忆空间</span>
   <span id="actionBtn" class="btn">⏭ 跳过白天</span>
 </div>
+
+<div id="viewDock" aria-label="白天具身视角">
+  <button class="btn on" type="button" data-view="statue">神像</button>
+  <button class="btn" type="button" data-view="prayer-manager">祈愿厅管理员</button>
+  <button class="btn" type="button" data-view="processing-manager">处理室管理员</button>
+  <button class="btn" type="button" data-view="gallery-manager">陈列室管理员</button>
+</div>
+<div id="movementHelp">灵体移动：WASD／方向键 · 点击地面 · 靠近实体后交互</div>
 
 <div id="hint">提示加载中…</div>
 
@@ -121,7 +240,7 @@
 <!-- ===== 对话框（B5） ===== -->
 <div id="dialogue">
   <div class="bubble">
-    <div class="who">上贡者</div>
+    <div class="who">上供者</div>
     <div class="say" id="npcSay">你好…</div>
     <div class="row">
       <input id="replyInput" type="text" placeholder="输入你的回应，回车确认…" autocomplete="off" />
@@ -135,12 +254,102 @@
 <div id="process"><div class="lab" id="procLab">面包机加工中…</div><div id="barWrap"><div id="bar"></div></div></div>
 <div id="nowPlaying">♪ 正在播放唱片 ♪</div>
 
+<!-- ===== 共鸣结果：完整观看后再归还／珍藏 ===== -->
+<div id="resonanceReveal" aria-hidden="true">
+  <div id="resonanceCard" tabindex="0" role="dialog" aria-modal="true" aria-labelledby="resonanceArtworkTitle">
+    <span id="swipeCueLeft">向左 · 归还材料</span>
+    <span id="swipeCueRight">向右 · 珍藏记忆</span>
+    <div id="resonanceHead">
+      <div>
+        <div id="resonanceRarity">常规记忆藏品</div>
+        <div id="resonanceMaterials">材料来历</div>
+      </div>
+      <div id="resonanceCarrier" tabindex="0" role="button">360°观察载体</div>
+    </div>
+    <div id="resonanceArtwork">
+      <div id="resonanceArtworkMark" aria-hidden="true"></div>
+      <div>
+        <div id="resonanceArtworkCategory"></div>
+        <h2 id="resonanceArtworkTitle">诗人的记忆</h2>
+      </div>
+      <p id="resonanceArtworkSummary"></p>
+      <p id="resonanceArtworkPrompt"></p>
+    </div>
+    <div id="resonanceActions">
+      <button class="btn" id="returnMemory" type="button">← 归还这段记忆 · 返还材料</button>
+      <button class="btn" id="keepMemory" type="button">珍藏这段记忆 · 放入背包 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 夜间记忆空间：动态多格背包 ===== -->
+<div id="memorySpace" aria-hidden="true">
+  <div id="memorySpacePanel">
+    <div id="memorySpaceHead">
+      <div>
+        <h2 id="memorySpaceTitle">记忆空间</h2>
+        <p>这里收纳你选择珍藏的全部艺术记忆；格子会随收藏继续生长。</p>
+      </div>
+      <button class="btn" id="memorySpaceClose" type="button">关闭 ×</button>
+    </div>
+    <div id="memoryTools">
+      <label>筛选
+        <select id="memoryFilter" aria-label="筛选记忆藏品">
+          <option value="all">全部藏品</option>
+          <option value="common">常规载体</option>
+          <option value="formula-relic">配方奇珍</option>
+          <option value="displayed">正在陈列</option>
+          <option value="行为艺术">行为艺术</option>
+          <option value="建筑艺术">建筑艺术</option>
+          <option value="音乐">音乐</option>
+          <option value="图画">图画</option>
+          <option value="小说">小说</option>
+          <option value="设计／工艺">设计／工艺</option>
+        </select>
+      </label>
+      <label>排序
+        <select id="memorySort" aria-label="排序记忆藏品">
+          <option value="newest">最新获得</option>
+          <option value="oldest">最早获得</option>
+          <option value="title">按标题</option>
+        </select>
+      </label>
+      <span id="memoryCount"></span>
+    </div>
+    <div id="memoryEmpty">这里还没有被珍藏的记忆。夜晚完成共鸣后，向右留下你想再次观看的作品。</div>
+    <div id="memoryGrid"></div>
+  </div>
+</div>
+
+<!-- ===== 收藏品 360°检视 ===== -->
+<div id="inspect" aria-hidden="true">
+  <div id="inspectPanel">
+    <div id="inspectHead">
+      <div>
+        <h2 id="inspectTitle">记忆藏品</h2>
+        <p id="inspectMeta">载体、艺术品与来历保持绑定</p>
+      </div>
+      <span class="btn" id="inspectClose">关闭 ×</span>
+    </div>
+    <div id="inspectStage">
+      <div id="inspectHelp">拖拽旋转 · 滚轮／双指缩放 · 松手后自动慢转</div>
+    </div>
+    <div id="inspectFoot">
+      <div id="inspectStatus"></div>
+      <div id="inspectActions">
+        <span class="btn" id="inspectReset">重置视角</span>
+        <span class="btn" id="inspectDisplay">选择展示位</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 开场说明 ===== -->
 <div id="intro"><div id="introCard">
-  <h1>庙宇供奉 · MVP</h1>
-  <p>你是供奉于庙中的<b>神像（诗人的化身）</b>。白天石像开门收贡，夜晚化为灵体、指挥<b>宠物</b>把供品加工成作品。</p>
-  <p><b>白天</b>：上贡者成群而来，各持一件供品。<b>点击上贡者</b>→ 供品入绿色区 + 拉近对话；不点也会自动留下供品。可按 <b>⏭ 跳过白天</b> 或等窗口耗尽进入夜晚。</p>
-  <p><b>夜晚</b>：庙门合上、神像化灵体。<b>点击供品 / 点击宠物</b>回收 → 点宠物变<b>面包机</b> → 选材料投料 → 约50秒产出<b>唱片</b> → 再点宠物变<b>唱片机</b> → 点击播放（有声）。</p>
+  <h1>诗人与岛 · 可行走寺庙原型</h1>
+  <p>你是供奉于庙中的<b>神像（诗人的化身）</b>。寺庙沿纵深连接<b>祈愿厅、处理室与陈列室</b>，每个房间都有一名看守者。</p>
+  <p><b>白天</b>：用左上角按钮在神像与三名管理员的具身视角间切换；回到神像回应上供者，获得与供品分开保存的<b>记忆能量</b>。</p>
+  <p><b>夜晚</b>：灵体自动显现。用 <b>WASD／方向键或点击地面</b>回收供品、走到处理室完成共鸣，再前往陈列室管理展示柜。向左归还材料，向右珍藏进记忆空间。</p>
   <p>右上角 <b>1× / 5× / 20×</b> 倍速可加速审核。屏幕左下角始终有「当前该点什么」的提示。</p>
   <p class="start"><span class="btn" id="startBtn">▶ 进入庙宇</span></p>
 </div></div>
@@ -148,9 +357,20 @@
 <!-- ============ Three.js r160 · 本地 UMD 全局版（零网络依赖，双击可运行） ============ -->
 <!-- three.min.js 会打印一句 "deprecated" warning，属预期无害；想消可删其开头的 console.warn 行 -->
 <script src="./three.min.js"></script>
+<script src="./content-catalog.js"></script>
+<script src="./game-rules.js"></script>
 
 <script>
 // UMD 全局版：THREE 已挂在 window 上，无需 import（全程用 THREE. 前缀）
+const { MATERIALS, CARRIERS, ARTWORKS, getMaterial, getCarrier, getArtwork } = window.TempleMvpContent;
+const {
+  CONFIG: RULES,
+  awardDialogueEnergy,
+  resonateMemory,
+  finalizeResonance,
+  assignShowcaseSlot,
+  removeFromShowcase,
+} = window.TempleMvpRules;
 
 /* ============================================================
  * §A  皮肤化架构 —— assetConfig（任务 §2「皮肤可替换」必做）
@@ -206,18 +426,38 @@ const TUNING = {
 const app = document.getElementById('app');
 const scene = new THREE.Scene();
 scene.background = C('sky');
-scene.fog = new THREE.Fog(C('sky'), 38, 78);
+scene.fog = new THREE.Fog(C('sky'), 46, 105);
 
 const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 200);
-// §2 视角：固定的「微缩 diorama 高位斜俯三人称」机位（不可自由操控）。
-// 重新理解「视角从神像出发」：不是把相机放在神像眼睛里（那样看不见它），
-// 而是固定的过肩 ¾ 俯视，神像作为可见的前景锚点。相机退到后墙外的后上方，
-// 配合 DIORAMA_CUTAWAY 隐藏后墙/天花板/屋顶，使下面四样同屏可见：
-//   神像(全身,前景) · 宠物狗 · 绿色供奉区 · 庙门开口(及进出的上贡者)。
-// 几何已验证：神像全身落在画面下部前景，庙门开口在上部远景。
-// 微调指引：抬高/压低构图改 pos.y(9→10)，前后取景改 look.z(0→3) 与 FOV(48→54)。
-const CAM_HOME = { pos:new THREE.Vector3(3.0,9.5,-14.0), look:new THREE.Vector3(0.0,1.2,1.5) };
-camera.position.copy(CAM_HOME.pos);
+// 三段纵向寺庙：白天使用四个具身观察锚点，夜晚由镜头跟随独立灵体。
+const ROOMS = {
+  prayer:    { label:'祈愿厅', centerZ:0,   minZ:-10, maxZ:10,  depth:20, floorColor:'paper' },
+  processing:{ label:'处理室', centerZ:-18, minZ:-26, maxZ:-10, depth:16, floorColor:'ground' },
+  gallery:   { label:'陈列室', centerZ:-34, minZ:-42, maxZ:-26, depth:16, floorColor:'wall' },
+};
+const DAY_VIEWPOINTS = {
+  statue:{
+    label:'神像视角', roomId:'prayer',
+    pos:new THREE.Vector3(4.8,6.4,-9),
+    look:new THREE.Vector3(0,1.45,-0.8),
+  },
+  'prayer-manager':{
+    label:'祈愿厅管理员', roomId:'prayer',
+    pos:new THREE.Vector3(-5.8,4.8,8.2),
+    look:new THREE.Vector3(0,1.35,-5.2),
+  },
+  'processing-manager':{
+    label:'处理室管理员', roomId:'processing',
+    pos:new THREE.Vector3(4.8,5.1,-24.5),
+    look:new THREE.Vector3(0,1.15,-18),
+  },
+  'gallery-manager':{
+    label:'陈列室管理员', roomId:'gallery',
+    pos:new THREE.Vector3(-4.8,5.1,-40.5),
+    look:new THREE.Vector3(0,1.55,-34),
+  },
+};
+camera.position.copy(DAY_VIEWPOINTS.statue.pos);
 
 const renderer = new THREE.WebGLRenderer({ antialias:true });
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -247,6 +487,12 @@ scene.add(interior);
 const interior2 = new THREE.PointLight(0xffe0b0, 0.0, 40, 1.6);
 interior2.position.set(0, 3.4, -6);
 scene.add(interior2);
+const interiorProcessing = new THREE.PointLight(0xffc98f,0.0,28,1.5);
+interiorProcessing.position.set(0,4.2,-18);
+scene.add(interiorProcessing);
+const interiorGallery = new THREE.PointLight(0x9fe3d8,0.0,30,1.45);
+interiorGallery.position.set(0,4.4,-34);
+scene.add(interiorGallery);
 
 /* ============================================================
  * §D  卡通渲染工具（§3 · MeshToonMaterial + gradientMap + 反向壳描边）
@@ -299,10 +545,172 @@ function makeToon(geo, colorKey, opt={}){
   return grp;
 }
 
+// 收藏品统一几何：主场景、展示柜和独立检视舞台共用同一视觉定义
+function makeMemoryRecord(colorKey='terra'){
+  const record = new THREE.Group();
+  const disc = makeToon(
+    new THREE.CylinderGeometry(1.28,1.28,0.18,48),
+    'ink',
+    { outlineScale:1.025, texKey:'record' }
+  );
+  disc.rotation.x=Math.PI/2;
+  record.add(disc);
+  const label = makeToon(
+    new THREE.CylinderGeometry(0.46,0.46,0.205,32),
+    colorKey,
+    { outlineScale:1.02 }
+  );
+  label.rotation.x=Math.PI/2;
+  label.position.z=0.015;
+  record.add(label);
+  const center = makeToon(
+    new THREE.CylinderGeometry(0.1,0.1,0.23,20),
+    'paper',
+    { outline:false }
+  );
+  center.rotation.x=Math.PI/2;
+  center.position.z=0.025;
+  record.add(center);
+  for(const radius of [0.72,0.94,1.13]){
+    const groove = new THREE.Mesh(
+      new THREE.TorusGeometry(radius,0.012,6,64),
+      new THREE.MeshBasicMaterial({ color:0x70807d })
+    );
+    groove.position.z=0.115;
+    record.add(groove);
+  }
+  return record;
+}
+
+// 记忆藏品模型工厂：五种载体都必须能在展示柜和独立检视器复用。
+function makeUnnamedMemoryBox(){
+  const box = new THREE.Group();
+  const body = makeToon(new THREE.BoxGeometry(1.8,1.35,1.35),'wall',{ outlineScale:1.035 });
+  body.position.y=-0.08;
+  box.add(body);
+  const lid = makeToon(new THREE.BoxGeometry(1.92,0.3,1.47),'sageD',{ outlineScale:1.035 });
+  lid.position.y=0.74;
+  box.add(lid);
+  const seam = new THREE.Mesh(
+    new THREE.TorusGeometry(0.43,0.045,8,40),
+    new THREE.MeshBasicMaterial({ color:0x9FE3D8 })
+  );
+  seam.rotation.x=Math.PI/2;
+  seam.position.set(0,0.08,0.71);
+  box.add(seam);
+  const core = makeToon(
+    new THREE.OctahedronGeometry(0.24,0),
+    'spirit',
+    { outlineScale:1.06, emissive:assetConfig.colors.spirit }
+  );
+  core.position.set(0,0.08,0.78);
+  box.add(core);
+  return box;
+}
+
+function makeKaleidoscopeFruit(){
+  const fruit = new THREE.Group();
+  const core = makeToon(new THREE.IcosahedronGeometry(0.72,1),'water',{ outlineScale:1.035 });
+  fruit.add(core);
+  const petalColors=['terra','spirit','sageL','paper','water','sageD'];
+  for(let i=0;i<6;i++){
+    const angle=(i/6)*Math.PI*2;
+    const petal=makeToon(new THREE.ConeGeometry(0.36,1.15,5),petalColors[i],{ outlineScale:1.04 });
+    petal.position.set(Math.cos(angle)*0.86,Math.sin(angle)*0.86,0);
+    petal.rotation.z=angle-Math.PI/2;
+    petal.rotation.y=(i%2)*0.4;
+    fruit.add(petal);
+  }
+  const stem=makeToon(new THREE.CylinderGeometry(0.09,0.12,0.55,7),'sageD');
+  stem.position.z=-0.65;
+  stem.rotation.x=Math.PI/2;
+  fruit.add(stem);
+  return fruit;
+}
+
+function makeBreadRecord(){
+  const record=makeMemoryRecord('terra');
+  const crust=makeToon(new THREE.TorusGeometry(1.33,0.13,8,48),'ground',{ outlineScale:1.025 });
+  crust.position.z=0.02;
+  record.add(crust);
+  const arm=makeToon(new THREE.CylinderGeometry(0.055,0.075,1.35,8),'paper');
+  arm.rotation.z=-0.55;
+  arm.position.set(1.0,0.32,0.32);
+  record.add(arm);
+  const shell=makeToon(new THREE.SphereGeometry(0.18,10,8),'water');
+  shell.position.set(1.37,-0.22,0.34);
+  record.add(shell);
+  return record;
+}
+
+function makeSeedBook(){
+  const book=new THREE.Group();
+  const back=makeToon(new THREE.BoxGeometry(2.15,0.16,1.55),'sageD',{ outlineScale:1.035 });
+  back.position.y=-0.23;
+  book.add(back);
+  const pages=makeToon(new THREE.BoxGeometry(1.92,0.52,1.36),'paper',{ outlineScale:1.025 });
+  book.add(pages);
+  const cover=makeToon(new THREE.BoxGeometry(2.15,0.16,1.55),'terra',{ outlineScale:1.035 });
+  cover.position.y=0.36;
+  cover.rotation.z=-0.08;
+  book.add(cover);
+  const seed=makeToon(new THREE.DodecahedronGeometry(0.28,0),'ink',{ outlineScale:1.05 });
+  seed.position.set(-0.9,0.05,0);
+  book.add(seed);
+  for(let i=0;i<3;i++){
+    const leaf=makeToon(new THREE.SphereGeometry(0.28,12,8),'sageL',{ outlineScale:1.04 });
+    leaf.scale.set(1.4,0.15,0.72);
+    leaf.position.set(0.25+i*0.38,0.53-i*0.06,-0.2+i*0.18);
+    leaf.rotation.z=-0.22+i*0.18;
+    book.add(leaf);
+  }
+  return book;
+}
+
+function makeMoonLamp(){
+  const lamp=new THREE.Group();
+  const glow=new THREE.Mesh(
+    new THREE.SphereGeometry(0.72,24,18),
+    new THREE.MeshPhongMaterial({
+      color:0xffd7a0,
+      emissive:0xd68a45,
+      emissiveIntensity:0.8,
+      transparent:true,
+      opacity:0.92,
+    })
+  );
+  lamp.add(glow);
+  const beamPositions=[
+    [-0.88,0,0],[0.88,0,0],[0,-0.88,0],[0,0.88,0],
+  ];
+  beamPositions.forEach(([x,y],index)=>{
+    const beam=makeToon(new THREE.BoxGeometry(index<2?0.2:2.0,index<2?2.0:0.2,0.32),'ground',{ outlineScale:1.04 });
+    beam.position.set(x,y,0);
+    lamp.add(beam);
+  });
+  const joints=[[-0.88,-0.88],[0.88,-0.88],[-0.88,0.88],[0.88,0.88]];
+  joints.forEach(([x,y])=>{
+    const joint=makeToon(new THREE.BoxGeometry(0.34,0.34,0.48),'terra',{ outlineScale:1.04 });
+    joint.position.set(x,y,0);
+    lamp.add(joint);
+  });
+  return lamp;
+}
+
+function makeCollectibleModel(carrierId){
+  switch(carrierId){
+    case 'carrier-kaleidoscope-fruit': return makeKaleidoscopeFruit();
+    case 'carrier-bread-record': return makeBreadRecord();
+    case 'carrier-seed-book': return makeSeedBook();
+    case 'carrier-moon-lamp': return makeMoonLamp();
+    default: return makeUnnamedMemoryBox();
+  }
+}
+
 /* ============================================================
  * §E  搭建场景：庙宇长方体 + 地面 + 绿色区 + 神像 + 宠物
  * ========================================================== */
-// --- 室外地面（暖米褐，供上贡者行走可见） ---
+// --- 室外地面（暖米褐，供上供者行走可见） ---
 const groundGeo = new THREE.BoxGeometry(80, 0.6, 80);
 const ground = makeToon(groundGeo, 'ground', { outline:false, texKey:'ground' });
 ground.position.set(0,-0.6,0);
@@ -314,39 +722,85 @@ for(const [x,z,c] of [[-22,18,'sageD'],[22,16,'sageL'],[-18,30,'sageL'],[20,34,'
   hill.position.set(x,-3.5,z); hill.scale.y=0.5; scene.add(hill);
 }
 
-const TEMPLE = { w:16, h:8, d:20 };  // 长方体空间（A1）
-const halfD = TEMPLE.d/2;            // 前开口在 z=+10
+const TEMPLE = { w:16, h:8, frontZ:10, backZ:-42 };
+const halfD = TEMPLE.frontZ; // 保留上供者从庙门外进入的既有坐标语义
 
-// --- 庙宇地板（陶土地坪） ---
-const floor = makeToon(new THREE.BoxGeometry(TEMPLE.w,0.5,TEMPLE.d),'paper',{outline:false});
-floor.position.set(0,-0.25,0); floor.children[0].receiveShadow=true; scene.add(floor);
+function wall(w,h,d,x,y,z,colorKey='wall'){
+  const m=makeToon(new THREE.BoxGeometry(w,h,d),colorKey,{texKey:'wall'});
+  m.position.set(x,y,z);
+  scene.add(m);
+  return m;
+}
 
-// --- 墙体（灰蓝） ---
-function wall(w,h,d,x,y,z){ const m=makeToon(new THREE.BoxGeometry(w,h,d),'wall',{texKey:'wall'}); m.position.set(x,y,z); scene.add(m); return m; }
-const backWall = wall(TEMPLE.w, TEMPLE.h, 0.5, 0, TEMPLE.h/2, -halfD); // 后墙（神像背后）
-wall(0.5, TEMPLE.h, TEMPLE.d, -TEMPLE.w/2, TEMPLE.h/2, 0);       // 左墙
-wall(0.5, TEMPLE.h, TEMPLE.d,  TEMPLE.w/2, TEMPLE.h/2, 0);       // 右墙
-const ceiling = makeToon(new THREE.BoxGeometry(TEMPLE.w,0.5,TEMPLE.d),'wall',{outline:false});
-ceiling.position.set(0,TEMPLE.h,0); scene.add(ceiling);
+// 每个房间有独立地坪、低侧墙和入口框；顶部保持开放，保证具身镜头与跟随镜头不被屋顶截断。
+function makeRoomShell(roomId){
+  const room=ROOMS[roomId];
+  const shell=new THREE.Group();
+  shell.userData.roomId=roomId;
+  const floor=makeToon(
+    new THREE.BoxGeometry(TEMPLE.w,0.5,room.depth),
+    room.floorColor,
+    {outline:false}
+  );
+  floor.position.set(0,-0.25,room.centerZ);
+  floor.children[0].receiveShadow=true;
+  floor.userData.walkable=true;
+  shell.add(floor);
+  for(const x of [-TEMPLE.w/2,TEMPLE.w/2]){
+    const side=makeToon(new THREE.BoxGeometry(0.5,4.6,room.depth),'wall',{texKey:'wall'});
+    side.position.set(x,2.3,room.centerZ);
+    shell.add(side);
+  }
+  const inset=new THREE.Mesh(
+    new THREE.PlaneGeometry(TEMPLE.w-1.2,room.depth-1.2),
+    new THREE.MeshBasicMaterial({
+      color:roomId==='prayer'?0xc9b99a:roomId==='processing'?0x9a8065:0x667b78,
+      transparent:true,
+      opacity:0.14,
+      side:THREE.DoubleSide,
+    })
+  );
+  inset.rotation.x=-Math.PI/2;
+  inset.position.set(0,0.015,room.centerZ);
+  inset.userData.walkable=true;
+  shell.add(inset);
+  scene.add(shell);
+  return shell;
+}
+const roomShells=Object.keys(ROOMS).map(makeRoomShell);
+
+// 祈愿厅 → 处理室 → 陈列室：两道宽门洞和浅台阶把功能空间连续串联。
+function makePassageFrame(z,colorKey){
+  wall(4.6,4.8,0.55,-5.7,2.4,z,colorKey);
+  wall(4.6,4.8,0.55, 5.7,2.4,z,colorKey);
+  wall(7.0,0.55,0.65,0,4.55,z,colorKey);
+  const step=makeToon(new THREE.BoxGeometry(6.6,0.22,1.7),'terra',{outlineScale:1.02});
+  step.position.set(0,0.11,z+0.15);
+  scene.add(step);
+}
+makePassageFrame(-10,'terra');
+makePassageFrame(-26,'sageD');
+wall(TEMPLE.w,5.2,0.55,0,2.6,TEMPLE.backZ,'wall');
+
+// 房间识别装置：重复的环形地标使长纵深移动中始终能看出房间转换。
+for(const [roomId,color] of [['prayer',0x7c9a5e],['processing',0xc06a3f],['gallery',0x7db1ac]]){
+  const room=ROOMS[roomId];
+  const ring=new THREE.Mesh(
+    new THREE.TorusGeometry(2.05,0.08,8,48),
+    new THREE.MeshBasicMaterial({color,transparent:true,opacity:0.48})
+  );
+  ring.rotation.x=-Math.PI/2;
+  ring.position.set(0,0.055,room.centerZ);
+  scene.add(ring);
+}
+
 // 前面两侧门柱（让开口居中且足够大）
-wall(2, TEMPLE.h, 0.6, -7, TEMPLE.h/2, halfD);
-wall(2, TEMPLE.h, 0.6,  7, TEMPLE.h/2, halfD);
-// 陶土橙屋顶（style）
-const roof = makeToon(new THREE.BoxGeometry(TEMPLE.w+2,0.6,TEMPLE.d+2),'terra',{texKey:'roof'});
-roof.position.set(0,TEMPLE.h+0.6,0); scene.add(roof);
-const roofPrism = makeToon(new THREE.CylinderGeometry(0.01, (TEMPLE.w+2)/1.6, 2.4, 4),'terra',{outlineScale:1.02});
-roofPrism.rotation.y=Math.PI/4; roofPrism.position.set(0,TEMPLE.h+1.8,0); roofPrism.scale.z=(TEMPLE.d+2)/(TEMPLE.w+2);
-scene.add(roofPrism);
-
-// --- Diorama 娃娃屋切面（让高位斜俯固定机位能俯瞰庙内全貌） ---
-// 相机置于后墙外的后上方，故隐藏会挡住视线的：后墙 + 天花板 + 屋顶。
-// 左右侧墙、地板、门柱、庙门保留，仍是「微缩 diorama」的封闭感。
-const DIORAMA_CUTAWAY = true;
-if(DIORAMA_CUTAWAY){ backWall.visible=false; ceiling.visible=false; roof.visible=false; roofPrism.visible=false; }
+wall(2, TEMPLE.h, 0.6, -7, TEMPLE.h/2, TEMPLE.frontZ,'terra');
+wall(2, TEMPLE.h, 0.6,  7, TEMPLE.h/2, TEMPLE.frontZ,'terra');
 
 // --- 庙门（A1/A2：那一面可开/合，开口足够大） ---
 const door = makeToon(new THREE.BoxGeometry(12, TEMPLE.h, 0.4),'terra',{texKey:'roof'});
-door.position.set(0, TEMPLE.h/2, halfD);
+door.position.set(0, TEMPLE.h/2, TEMPLE.frontZ);
 scene.add(door);
 const DOOR_CLOSED_Y = TEMPLE.h/2;
 const DOOR_OPEN_Y   = TEMPLE.h + 9;   // 向上滑出视野 = 开门
@@ -371,12 +825,73 @@ const armL = makeToon(new THREE.BoxGeometry(0.4,1.8,0.4),'stone'); armL.position
 const armR = makeToon(new THREE.BoxGeometry(0.4,1.8,0.4),'stone'); armR.position.set( 1.05,2.2,0); armR.rotation.z=-0.18; statue.add(armR);
 statue.position.set(0,0,-7);
 scene.add(statue);
-statue.userData.onClick = ()=>{ if(state.phase==='NIGHT') toggleSpirit(); };
+statue.userData.onClick = ()=>{ if(state.phase==='NIGHT') flashHint('你的灵体已经离开石像，可以自由穿行寺庙。'); };
 const statueMats = [base,body,head,armL,armR].map(g=>g.userData.mat);
+
+function makeRoomManager(viewId,label,colorKey,position){
+  const manager=new THREE.Group();
+  const robe=makeToon(new THREE.CylinderGeometry(0.48,0.68,1.75,8),colorKey);
+  robe.position.y=1.12;
+  manager.add(robe);
+  const face=makeToon(new THREE.SphereGeometry(0.38,14,10),'paper');
+  face.position.y=2.32;
+  manager.add(face);
+  const cap=makeToon(new THREE.CylinderGeometry(0.22,0.52,0.32,8),'ink');
+  cap.position.y=2.78;
+  manager.add(cap);
+  const key=makeToon(new THREE.TorusGeometry(0.2,0.055,8,20),'terra',{outlineScale:1.06});
+  key.position.set(0.58,1.35,0.25);
+  manager.add(key);
+  manager.position.copy(position);
+  manager.userData.viewId=viewId;
+  manager.userData.label=label;
+  manager.userData.onClick=()=>{ if(state.phase==='DAY') setDayView(viewId); };
+  scene.add(manager);
+  return manager;
+}
+const roomManagers=[
+  makeRoomManager('prayer-manager','祈愿厅管理员','sageD',new THREE.Vector3(-5,0,-3)),
+  makeRoomManager('processing-manager','处理室管理员','terra',new THREE.Vector3(5,0,-17)),
+  makeRoomManager('gallery-manager','陈列室管理员','water',new THREE.Vector3(-5,0,-33)),
+];
+
+function makeSpiritAvatar(){
+  const spirit=new THREE.Group();
+  const body=makeToon(
+    new THREE.CapsuleGeometry(0.42,1.05,5,10),
+    'spirit',
+    {outlineScale:1.06,emissive:assetConfig.colors.spirit,transparent:true,opacity:0.72}
+  );
+  body.position.y=1.15;
+  body.userData.mat.emissiveIntensity=0.72;
+  spirit.add(body);
+  const core=makeToon(
+    new THREE.OctahedronGeometry(0.22,0),
+    'white',
+    {outline:false,emissive:assetConfig.colors.spirit,transparent:true,opacity:0.9}
+  );
+  core.position.y=1.35;
+  core.userData.mat.emissiveIntensity=0.9;
+  spirit.add(core);
+  const halo=new THREE.Mesh(
+    new THREE.TorusGeometry(0.52,0.045,8,32),
+    new THREE.MeshBasicMaterial({color:0x9fe3d8,transparent:true,opacity:0.72})
+  );
+  halo.rotation.x=Math.PI/2;
+  halo.position.y=2.05;
+  spirit.add(halo);
+  spirit.visible=false;
+  scene.add(spirit);
+  return spirit;
+}
+const spiritAvatar=makeSpiritAvatar();
+spiritAvatar.position.set(0,0,-5.2);
 
 // --- 宠物（诗人昔日宠物后代 · 一条狗），三态：狗 ↔ 面包机 ↔ 唱片机（C7） ---
 const pet = new THREE.Group();
-pet.position.set(3.2,0,-4.4);
+const PET_HOME=new THREE.Vector3(0,0,-18);
+pet.position.copy(PET_HOME);
+pet.visible=false;
 scene.add(pet);
 
 // 狗形态
@@ -410,6 +925,63 @@ playerForm.visible=false; pet.add(playerForm);
 
 pet.userData.onClick = ()=> onPetClick();
 
+// --- 三槽收藏展示柜：庙内真实世界物体，可陈列、检视与收回 ---
+const showcase = new THREE.Group();
+showcase.position.set(0,0,-38.5);
+showcase.rotation.y=0;
+scene.add(showcase);
+
+const cabinetBack = makeToon(new THREE.BoxGeometry(5.4,3.8,0.38),'wall',{outlineScale:1.02});
+cabinetBack.position.set(0,2.05,0);
+showcase.add(cabinetBack);
+for(const x of [-2.65,2.65]){
+  const post = makeToon(new THREE.BoxGeometry(0.28,4.2,0.7),'terra',{outlineScale:1.03});
+  post.position.set(x,2.1,-0.25);
+  showcase.add(post);
+}
+for(const y of [0.12,3.98]){
+  const beam = makeToon(new THREE.BoxGeometry(5.6,0.28,0.7),'terra',{outlineScale:1.03});
+  beam.position.set(0,y,-0.25);
+  showcase.add(beam);
+}
+const shelf = makeToon(new THREE.BoxGeometry(5.2,0.2,1.05),'paper',{outlineScale:1.03});
+shelf.position.set(0,0.72,-0.55);
+showcase.add(shelf);
+const glass = new THREE.Mesh(
+  new THREE.PlaneGeometry(5.05,3.45),
+  new THREE.MeshPhongMaterial({
+    color:0x9fcac4,
+    transparent:true,
+    opacity:0.11,
+    side:THREE.DoubleSide,
+    shininess:90,
+  })
+);
+glass.position.set(0,2.18,-1.05);
+showcase.add(glass);
+
+const showcaseSlots = [];
+[-1.68,0,1.68].forEach((x,index)=>{
+  const slot = new THREE.Group();
+  slot.position.set(x,1.75,-0.82);
+  const pedestal = makeToon(new THREE.CylinderGeometry(0.7,0.82,0.28,24),'paper',{outlineScale:1.035});
+  pedestal.position.y=-0.88;
+  slot.add(pedestal);
+  const halo = new THREE.Mesh(
+    new THREE.TorusGeometry(0.62,0.035,8,32),
+    new THREE.MeshBasicMaterial({ color:0x9FE3D8, transparent:true, opacity:0.45 })
+  );
+  halo.position.z=0.04;
+  slot.add(halo);
+  slot.userData.slotIndex=index;
+  slot.userData.onClick=()=>onShowcaseSlotClick(index);
+  showcase.add(slot);
+  showcaseSlots.push(slot);
+});
+const showcaseLight = new THREE.PointLight(0xF2D9A0,0.8,12);
+showcaseLight.position.set(0,5,-37);
+scene.add(showcaseLight);
+
 /* ============================================================
  * §F  HUD / DOM 引用 & 交互绑定
  * ========================================================== */
@@ -417,6 +989,11 @@ const dom = {
   phaseChip:document.getElementById('phaseChip'),
   dayChip:document.getElementById('dayChip'),
   clockChip:document.getElementById('clockChip'),
+  energyChip:document.getElementById('energyChip'),
+  roomChip:document.getElementById('roomChip'),
+  viewDock:document.getElementById('viewDock'),
+  movementHelp:document.getElementById('movementHelp'),
+  memorySpaceBtn:document.getElementById('memorySpaceBtn'),
   actionBtn:document.getElementById('actionBtn'),
   hint:document.getElementById('hint'),
   invItems:document.getElementById('invItems'),
@@ -429,6 +1006,34 @@ const dom = {
   procLab:document.getElementById('procLab'),
   bar:document.getElementById('bar'),
   nowPlaying:document.getElementById('nowPlaying'),
+  resonanceReveal:document.getElementById('resonanceReveal'),
+  resonanceCard:document.getElementById('resonanceCard'),
+  resonanceCarrier:document.getElementById('resonanceCarrier'),
+  resonanceRarity:document.getElementById('resonanceRarity'),
+  resonanceMaterials:document.getElementById('resonanceMaterials'),
+  resonanceArtwork:document.getElementById('resonanceArtwork'),
+  resonanceArtworkMark:document.getElementById('resonanceArtworkMark'),
+  resonanceArtworkCategory:document.getElementById('resonanceArtworkCategory'),
+  resonanceArtworkTitle:document.getElementById('resonanceArtworkTitle'),
+  resonanceArtworkSummary:document.getElementById('resonanceArtworkSummary'),
+  resonanceArtworkPrompt:document.getElementById('resonanceArtworkPrompt'),
+  returnMemory:document.getElementById('returnMemory'),
+  keepMemory:document.getElementById('keepMemory'),
+  memorySpace:document.getElementById('memorySpace'),
+  memoryGrid:document.getElementById('memoryGrid'),
+  memoryFilter:document.getElementById('memoryFilter'),
+  memorySort:document.getElementById('memorySort'),
+  memorySpaceClose:document.getElementById('memorySpaceClose'),
+  memoryCount:document.getElementById('memoryCount'),
+  memoryEmpty:document.getElementById('memoryEmpty'),
+  inspect:document.getElementById('inspect'),
+  inspectStage:document.getElementById('inspectStage'),
+  inspectTitle:document.getElementById('inspectTitle'),
+  inspectMeta:document.getElementById('inspectMeta'),
+  inspectStatus:document.getElementById('inspectStatus'),
+  inspectClose:document.getElementById('inspectClose'),
+  inspectReset:document.getElementById('inspectReset'),
+  inspectDisplay:document.getElementById('inspectDisplay'),
   intro:document.getElementById('intro'),
 };
 
@@ -454,23 +1059,65 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
  * ========================================================== */
 const state = {
   phase:'DAY', day:1, speed:1,
+  dayViewId:'statue',
+  activeRoomId:'prayer',
+  movementKeys:new Set(),
+  moveTarget:null,
+  memoryEnergy:0,               // 对话获得、共鸣合成消耗；与供品分离
   dayElapsed:0,                 // 游戏秒
   spawnTimer:0, nextSpawnIn:0,  // 下一组刷新倒计时
-  offerers:[],                  // 活动中的上贡者
+  offerers:[],                  // 活动中的上供者
   offerings:[],                 // 绿色区里的供品 mesh
-  inventory:[],                 // {kind:'material'|'record', label, color, mesh?}
-  selectedMaterial:null,
+  inventory:[],                 // 回收后的材料实例；与记忆能量、记忆藏品分开
+  selectedMaterialIds:[],
+  nextMaterialItemId:1,
+  nextResonanceResultId:1,
+  nextMemoryItemId:1,
+  pendingResonanceResult:null,
+  returnedArtworkIds:[],
+  memoryItems:[],
+  showcaseSlots:[null,null,null],
+  pendingShowcaseMemoryItemId:null,
+  memorySpaceOpen:false,
+  memoryFilter:'all',
+  memorySort:'newest',
+  inspectOpen:false,
   petForm:'dog',                // dog | toaster | player
   spirit:false,
   processing:null,              // {elapsed,duration}
-  hasRecord:false,
-  dialogueOpen:false, dialogueNpc:null,
+  dialogueOpen:false, dialogueNpc:null, dialogueSettled:false,
   camAnim:null,                 // {fromPos,fromLook,toPos,toLook,t,dur,onDone}
-  curLook:CAM_HOME.look.clone(),
+  curLook:DAY_VIEWPOINTS.statue.look.clone(),
 };
 
+function currentDayViewpoint(){
+  return DAY_VIEWPOINTS[state.dayViewId] || DAY_VIEWPOINTS.statue;
+}
+function setDayView(viewId,snap=false){
+  if(state.phase!=='DAY' || !DAY_VIEWPOINTS[viewId]) return;
+  state.dayViewId=viewId;
+  const view=DAY_VIEWPOINTS[viewId];
+  state.activeRoomId=view.roomId;
+  document.querySelectorAll('[data-view]').forEach(button=>{
+    button.classList.toggle('on',button.dataset.view===viewId);
+  });
+  if(snap){
+    state.camAnim=null;
+    camera.position.copy(view.pos);
+    state.curLook.copy(view.look);
+    camera.lookAt(state.curLook);
+  }else{
+    flyCamera(view.pos.clone(),view.look.clone(),0.72);
+  }
+  updateHud();
+  updateHint();
+}
+document.querySelectorAll('[data-view]').forEach(button=>{
+  button.addEventListener('click',()=>setDayView(button.dataset.view));
+});
+
 /* ============================================================
- * §H  上贡者系统（B1–B8）
+ * §H  上供者系统（B1–B8）
  * ========================================================== */
 const OFFERING_SHAPES = [
   ()=>new THREE.IcosahedronGeometry(0.32,0),
@@ -570,7 +1217,7 @@ function removeOfferer(off){
   const idx = state.offerers.indexOf(off); if(idx>=0) state.offerers.splice(idx,1);
 }
 
-// 点击上贡者（B4+B5）：放下供品 + 脚本式拉近 + 对话框
+// 点击上供者（B4+B5）：放下供品 + 脚本式拉近 + 对话框
 function onOffererClick(off){
   if(state.phase!=='DAY' || off.dead || state.dialogueOpen) return;
   if(!off.dropped) dropOffering(off);
@@ -583,6 +1230,7 @@ function onOffererClick(off){
 }
 function openDialogue(off){
   state.dialogueOpen = true;
+  state.dialogueSettled = false;
   dom.npcSay.textContent = pickGreeting();
   dom.replyEcho.textContent='';
   dom.replyInput.value='';
@@ -592,21 +1240,30 @@ function openDialogue(off){
 const GREETINGS = ['你好…','愿神像庇佑。','我带来了一点心意。','今日风和日丽呢。','请收下这份供奉。','远道而来，特来参拜。'];
 function pickGreeting(){ return GREETINGS[Math.floor(rand(0,GREETINGS.length))]; }
 
-// B5：输入只做接受与显示，不接任何 AI、不做处理
+// B5：MVP 暂不接 AI；非空真实回应固定结算 1 点记忆能量
 function submitReply(){
+  if(state.dialogueSettled) return;
+  state.dialogueSettled = true;
   const txt = dom.replyInput.value.trim();
-  dom.replyEcho.textContent = txt ? `你回应：「${txt}」` : '（你沉默以对）';
-  setTimeout(closeDialogue, 700);
+  const result = awardDialogueEnergy(state.memoryEnergy, txt);
+  state.memoryEnergy = result.energy;
+  dom.replyEcho.textContent = result.gained
+    ? `你回应：「${txt}」　✦ 获得 ${result.gained} 点记忆能量`
+    : '（你沉默以对，没有获得记忆能量）';
+  updateHud();
+  setTimeout(closeDialogue, 1050);
 }
 dom.replyBtn.addEventListener('click', submitReply);
 dom.replyInput.addEventListener('keydown', e=>{ if(e.key==='Enter') submitReply(); });
 function closeDialogue(){
   if(!state.dialogueOpen) return;
   state.dialogueOpen = false;
+  state.dialogueSettled = false;
   dom.dialogue.style.display='none';
   const off = state.dialogueNpc; state.dialogueNpc=null;
   if(off){ off.paused=false; if(off.phase==='stay') off.t=Math.max(off.t,TUNING.OFFERER_STAY*0.6); }
-  flyCamera(CAM_HOME.pos.clone(), CAM_HOME.look.clone(), 0.6); // 本轮结束自动归位
+  const view=currentDayViewpoint();
+  flyCamera(view.pos.clone(),view.look.clone(),0.6); // 回到当前具身观察位置
 }
 
 /* ============================================================
@@ -615,62 +1272,209 @@ function closeDialogue(){
 function endDay(skipped){
   if(state.phase!=='DAY') return;
   state.phase='NIGHT';
-  // 让仍在场的上贡者把供品留下并撤离（B7：跳过时不弹对话框）
+  // 让仍在场的上供者把供品留下并撤离（B7：跳过时不弹对话框）
   for(const off of [...state.offerers]){
     if(!off.dropped) dropOffering(off);
     removeOfferer(off);
   }
   if(state.dialogueOpen) closeDialogue();
   doorTarget = DOOR_CLOSED_Y;                 // 庙门合上
+  state.camAnim=null;
+  state.moveTarget=null;
+  state.movementKeys.clear();
+  state.activeRoomId='prayer';
+  spiritAvatar.position.set(0,0,-5.2);
+  setSpirit(true);
+  pet.visible=true;
+  roomManagers.forEach(manager=>manager.visible=false);
   // 灯光切夜晚
   sun.intensity = 0.12; ambient.intensity = 0.28;
   interior.intensity = 1.5; interior2.intensity = 1.1;
+  interiorProcessing.intensity=1.25; interiorGallery.intensity=1.1;
   scene.background = new THREE.Color(0x2b3640);
   scene.fog.color = new THREE.Color(0x2b3640);
   updateHud(); updateHint();
 }
 function startNewDay(){
   if(state.phase!=='NIGHT') return;
+  if(state.pendingResonanceResult){
+    flash(dom.procLab,'请先决定归还或珍藏当前的艺术记忆');
+    pulseProcessHint();
+    return;
+  }
+  if(state.processing){
+    flash(dom.procLab,'共鸣尚未完成，不能进入新一天');
+    pulseProcessHint();
+    return;
+  }
+  closeMemorySpace();
   // 重置夜晚产出链
   state.day++;
   state.phase='DAY';
   state.dayElapsed=0; state.spawnTimer=0; state.nextSpawnIn=0;
+  state.movementKeys.clear();
+  state.moveTarget=null;
   setSpirit(false);
   setPetForm('dog');
-  state.processing=null; state.hasRecord=false; state.selectedMaterial=null;
+  pet.visible=false;
+  roomManagers.forEach(manager=>manager.visible=true);
+  state.processing=null;
+  state.selectedMaterialIds=[];
   // 清掉残留供品
   for(const it of [...state.offerings]) scene.remove(it);
   state.offerings.length=0;
-  // 清掉夜晚产物（保留？这里每日清空以便链路重复演示）
-  state.inventory = state.inventory.filter(()=>false);
+  // 已经回收的材料、记忆能量与记忆藏品跨昼夜保留。
   renderInventory();
   doorTarget = DOOR_OPEN_Y;
   sun.intensity=1.7; ambient.intensity=0.85; interior.intensity=0; interior2.intensity=0;
+  interiorProcessing.intensity=0; interiorGallery.intensity=0;
   scene.background = C('sky'); scene.fog.color = C('sky');
   dom.process.style.display='none'; dom.nowPlaying.style.display='none';
+  setDayView('statue',true);
   updateHud(); updateHint();
 }
 
-/* ---- 神像灵体形态（C1） ---- */
-function toggleSpirit(){ setSpirit(!state.spirit); }
+/* ---- 夜晚独立灵体（石像始终保留在祈愿厅） ---- */
 function setSpirit(on){
   state.spirit = on;
-  for(const m of statueMats){
-    if(on){ m.color = C('spirit'); m.emissive = C('spirit'); m.emissiveIntensity=0.6; m.transparent=true; m.opacity=0.72; }
-    else  { m.color = C('stone');  m.emissiveIntensity=0; m.transparent=false; m.opacity=1; }
-    m.needsUpdate=true;
-  }
+  spiritAvatar.visible=state.phase==='NIGHT';
+  if(!on) spiritAvatar.visible=false;
+  statue.position.y=0;
   updateHint();
 }
 
 /* ============================================================
  * §J  夜晚 · 回收与加工（C2–C7）
  * ========================================================== */
+function roomForPosition(position){
+  const z=position?.z ?? 0;
+  if(z<ROOMS.processing.minZ) return 'gallery';
+  if(z<ROOMS.prayer.minZ) return 'processing';
+  return 'prayer';
+}
+function worldInputBlocked(){
+  return state.dialogueOpen
+    || state.inspectOpen
+    || state.memorySpaceOpen
+    || Boolean(state.pendingResonanceResult)
+    || dom.intro.style.display!=='none';
+}
+function setSpiritMoveTarget(point){
+  if(state.phase!=='NIGHT' || !state.spirit || !point || worldInputBlocked()) return;
+  state.moveTarget=new THREE.Vector3(
+    THREE.MathUtils.clamp(point.x,-6.65,6.65),
+    0,
+    THREE.MathUtils.clamp(point.z,TEMPLE.backZ+1.25,TEMPLE.frontZ-1.25)
+  );
+}
+function applyPassageCollision(previous,next){
+  for(const boundary of [-10,-26]){
+    const deltaZ=next.z-previous.z;
+    if(deltaZ===0) continue;
+    const crossingT=(boundary-previous.z)/deltaZ;
+    const crossed=crossingT>=0 && crossingT<=1;
+    const crossingX=previous.x+(next.x-previous.x)*crossingT;
+    if(crossed && Math.abs(crossingX)>3.15){
+      const approachedFromFront=previous.z>boundary
+        || (previous.z===boundary && deltaZ<0);
+      next.z=approachedFromFront ? boundary+0.48 : boundary-0.48;
+      break;
+    }
+  }
+}
+function updateSpiritMovement(dtReal){
+  if(state.phase!=='NIGHT' || !state.spirit || worldInputBlocked()) return;
+  let dx=0;
+  let dz=0;
+  if(state.movementKeys.has('KeyW') || state.movementKeys.has('ArrowUp')) dz-=1;
+  if(state.movementKeys.has('KeyS') || state.movementKeys.has('ArrowDown')) dz+=1;
+  if(state.movementKeys.has('KeyA') || state.movementKeys.has('ArrowLeft')) dx-=1;
+  if(state.movementKeys.has('KeyD') || state.movementKeys.has('ArrowRight')) dx+=1;
+  const direction=new THREE.Vector3(dx,0,dz);
+  if(direction.lengthSq()>0){
+    direction.normalize();
+    state.moveTarget=null;
+  }else if(state.moveTarget){
+    direction.subVectors(state.moveTarget,spiritAvatar.position);
+    direction.y=0;
+    if(direction.length()<0.18){
+      state.moveTarget=null;
+      direction.set(0,0,0);
+    }else direction.normalize();
+  }
+  if(direction.lengthSq()>0){
+    const step=5.1*dtReal;
+    const previous=spiritAvatar.position.clone();
+    const next=spiritAvatar.position.clone().addScaledVector(direction,step);
+    applyPassageCollision(previous,next);
+    spiritAvatar.position.copy(next);
+    spiritAvatar.position.x=THREE.MathUtils.clamp(spiritAvatar.position.x,-6.65,6.65);
+    spiritAvatar.position.z=THREE.MathUtils.clamp(
+      spiritAvatar.position.z,
+      TEMPLE.backZ+1.25,
+      TEMPLE.frontZ-1.25
+    );
+    spiritAvatar.rotation.y=Math.atan2(direction.x,direction.z);
+  }
+  const roomId=roomForPosition(spiritAvatar.position);
+  if(roomId!==state.activeRoomId){
+    state.activeRoomId=roomId;
+    updateHud();
+    flashHint(`你进入了${ROOMS[roomId].label}。`);
+  }
+}
+function updateSpiritCamera(dtReal,snap=false){
+  if(state.phase!=='NIGHT' || !state.spirit) return;
+  const desired=new THREE.Vector3(
+    THREE.MathUtils.clamp(spiritAvatar.position.x*0.35,-2.2,2.2),
+    6.2,
+    spiritAvatar.position.z+7.8
+  );
+  const look=spiritAvatar.position.clone().add(new THREE.Vector3(0,1.05,-0.4));
+  const k=snap?1:Math.min(dtReal*4.8,1);
+  camera.position.lerp(desired,k);
+  state.curLook.lerp(look,k);
+  camera.lookAt(state.curLook);
+}
+function requireSpiritNear(target,radius=4.2){
+  if(state.phase!=='NIGHT' || !state.spirit){
+    flashHint('实体操作只在夜晚由灵体完成。');
+    return false;
+  }
+  const targetPosition=new THREE.Vector3();
+  target.getWorldPosition(targetPosition);
+  const targetRoomId=roomForPosition(targetPosition);
+  const distance=Math.hypot(
+    spiritAvatar.position.x-targetPosition.x,
+    spiritAvatar.position.z-targetPosition.z
+  );
+  if(targetRoomId!==state.activeRoomId || distance>radius){
+    flashHint(`当前在${ROOMS[state.activeRoomId].label}；请先走到${ROOMS[targetRoomId].label}并靠近目标。`);
+    return false;
+  }
+  return true;
+}
+
 function collectOffering(item){
+  if(!requireSpiritNear(item,4.5)) return;
   const idx = state.offerings.indexOf(item); if(idx<0) return;
   state.offerings.splice(idx,1);
   scene.remove(item);
-  state.inventory.push({ kind:'material', label:'供品', color:item.userData.colorKey||'sageL' });
+  const dropOrder=[
+    'wheat-bread','echo-shell',
+    'iris-berry','mirror-salt',
+    'ink-seed','thread-leaf',
+    'joinery-wood','glaze-clay',
+  ];
+  const materialId=dropOrder[(state.nextMaterialItemId-1)%dropOrder.length];
+  const material=getMaterial(materialId);
+  state.inventory.push({
+    id:`material-item-${state.nextMaterialItemId++}`,
+    kind:'material',
+    materialId,
+    label:material.label,
+    color:material.color,
+  });
   renderInventory(); updateHint();
 }
 function collectAll(){
@@ -679,19 +1483,27 @@ function collectAll(){
 
 function onPetClick(){
   if(state.phase!=='NIGHT'){ return; } // 宠物加工只在夜晚（白天它就趴着）
-  // 1) 若绿色区还有供品 → 宠物帮忙拾取（C2：点宠物触发拾取）
-  if(state.offerings.length>0){ collectAll(); return; }
-  // 2) 否则在三态间推进
+  if(!requireSpiritNear(pet,4.8)) return;
+  // 祈愿厅供品必须由灵体亲自回收，处理室的宠物不再跨房间代取。
+  if(state.offerings.length>0){
+    flashHint(`还有 ${state.offerings.length} 件供品留在祈愿厅；请先走回去靠近回收。`);
+    return;
+  }
+  // 回收完毕后，由处理室宠物装置启动双材料共鸣。
   if(state.petForm==='dog'){
     setPetForm('toaster');
   } else if(state.petForm==='toaster'){
     if(state.processing){ return; } // 加工中不切换
-    // 有选中材料 → 投料加工（C4）；否则切到唱片机（需已有唱片）
-    if(state.selectedMaterial){ startProcessing(); }
-    else if(state.hasRecord){ setPetForm('player'); }
-    else { flash(dom.procLab,'请先在物品栏选一件材料投料'); pulseProcessHint(); }
+    if(state.pendingResonanceResult){ openResonanceReveal(); }
+    else if(state.selectedMaterialIds.length===2){ startProcessing(); }
+    else if(state.memoryItems.some(item=>getArtwork(item.artworkId)?.category==='音乐')){
+      setPetForm('player');
+    }else{
+      flash(dom.procLab,'请先在材料栏选择两件材料');
+      pulseProcessHint();
+    }
   } else if(state.petForm==='player'){
-    if(state.hasRecord) playRecord();
+    if(state.memoryItems.some(item=>getArtwork(item.artworkId)?.category==='音乐')) playRecord();
     else setPetForm('dog');
   }
   updateHint();
@@ -704,42 +1516,159 @@ function setPetForm(f){
   updateHint();
 }
 
-// C4：投料 → 50s → 产出唱片
+// C4：两件材料 + 1 点记忆能量 → 50s 共鸣 → 待抉择记忆藏品
 function startProcessing(){
-  if(!state.selectedMaterial) return;
-  // 消耗该材料
-  const i = state.inventory.indexOf(state.selectedMaterial);
-  if(i>=0) state.inventory.splice(i,1);
-  state.selectedMaterial=null; renderInventory();
-  state.processing = { elapsed:0, duration:TUNING.NIGHT_PROCESS };
+  const resultId=`resonance-result-${state.nextResonanceResultId}`;
+  const seenArtworkIds=[
+    ...state.memoryItems.map(item=>item.artworkId),
+    ...state.returnedArtworkIds,
+  ];
+  const result = resonateMemory({
+    energy:state.memoryEnergy,
+    inventory:state.inventory,
+    selectedMaterialIds:state.selectedMaterialIds,
+    resultId,
+    roll:pseudo(),
+    artworkRoll:pseudo(),
+    seenArtworkIds,
+    createdAt:`day-${state.day}`,
+  });
+  if(!result.ok){
+    const message = result.code==='NO_ENERGY'
+      ? `记忆能量不足：共鸣需要 ${RULES.resonanceEnergyCost} 点`
+      : '请先选择两件仍在材料栏中的材料';
+    flash(dom.procLab,message);
+    pulseProcessHint();
+    return;
+  }
+  state.nextResonanceResultId++;
+  state.memoryEnergy=result.energy;
+  state.inventory=result.inventory;
+  state.selectedMaterialIds=[];
+  renderInventory(); updateHud();
+  state.processing = {
+    elapsed:0,
+    duration:TUNING.NIGHT_PROCESS,
+    resonanceResult:result.resonanceResult,
+  };
   dom.process.style.display='block';
-  dom.procLab.textContent='面包机加工中…（投料 → 唱片）';
+  dom.bar.style.width='0%';
+  dom.procLab.textContent='共鸣中…（2 件材料 + 1 点记忆能量 → 记忆藏品）';
   updateHint();
 }
 function finishProcessing(){
+  const resonanceResult=state.processing && state.processing.resonanceResult;
   state.processing=null;
   dom.process.style.display='none';
-  // 产出唱片放到面包机口前，玩家拾取（C5）
-  spawnRecordPickup();
+  if(resonanceResult){
+    state.pendingResonanceResult=resonanceResult;
+    openResonanceReveal();
+  }
   updateHint();
 }
-let recordPickup=null;
-function spawnRecordPickup(){
-  const r = makeToon(new THREE.CylinderGeometry(0.5,0.5,0.08,24),'ink',{outlineScale:1.06,texKey:'record'});
-  const label = makeToon(new THREE.CylinderGeometry(0.16,0.16,0.09,16),'terra',{outline:false});
-  r.add(label);
-  r.position.copy(pet.position).add(new THREE.Vector3(0,1.9,1.2));
-  r.userData.onClick = ()=> pickupRecord();
-  scene.add(r); recordPickup=r;
-  state._recordFloat=0;
+
+let resonanceStartX=0;
+let resonanceDeltaX=0;
+let resonanceDragging=false;
+
+function openResonanceReveal(){
+  const result=state.pendingResonanceResult;
+  if(!result) return;
+  const carrier=getCarrier(result.carrierId);
+  const artwork=getArtwork(result.artworkId);
+  const materials=result.materialIds.map(getMaterial).filter(Boolean);
+  dom.resonanceCarrier.textContent=`360°观察 · ${carrier?.label||'无名记忆匣'}`;
+  dom.resonanceRarity.textContent=result.rarity==='formula-relic'?'配方奇珍 · 20%':'常规载体 · 80%';
+  dom.resonanceMaterials.textContent=`${materials.map(item=>item.label).join(' × ')} · 已消耗 1 点记忆能量`;
+  dom.resonanceArtworkCategory.textContent=artwork?.category||'艺术记忆';
+  dom.resonanceArtworkTitle.textContent=artwork?.title||'未命名作品';
+  dom.resonanceArtworkSummary.textContent=artwork?.summary||'';
+  dom.resonanceArtworkPrompt.textContent=`观看提示：${artwork?.perception||'先停留片刻，再决定是否留下。'}`;
+  dom.resonanceArtworkMark.style.background=artwork?.accent||'#7DB1AC';
+  dom.resonanceCard.style.transform='';
+  dom.resonanceCard.style.opacity='1';
+  dom.resonanceReveal.style.display='flex';
+  dom.resonanceReveal.setAttribute('aria-hidden','false');
+  dom.keepMemory.focus();
 }
-function pickupRecord(){
-  if(!recordPickup) return;
-  scene.remove(recordPickup); recordPickup=null;
-  state.hasRecord=true;
-  state.inventory.push({ kind:'record', label:'唱片', color:'ink' });
-  renderInventory(); updateHint();
+
+function closeResonanceReveal(){
+  resonanceDragging=false;
+  resonanceDeltaX=0;
+  dom.resonanceReveal.style.display='none';
+  dom.resonanceReveal.setAttribute('aria-hidden','true');
+  dom.resonanceCard.style.transform='';
+  dom.resonanceCard.style.opacity='1';
 }
+
+function finalizePendingResult(decision){
+  if(!state.pendingResonanceResult) return;
+  const memoryItemId=decision==='keep'
+    ? `memory-item-${state.nextMemoryItemId}`
+    : null;
+  const result=finalizeResonance({
+    resonanceResult:state.pendingResonanceResult,
+    decision,
+    energy:state.memoryEnergy,
+    inventory:state.inventory,
+    memoryItems:state.memoryItems,
+    memoryItemId,
+  });
+  if(!result.ok) return;
+  state.inventory=result.inventory;
+  state.memoryItems=result.memoryItems;
+  if(decision==='keep'){
+    const kept=state.memoryItems.find(item=>item.id===memoryItemId);
+    if(kept) kept.keptOrder=state.nextMemoryItemId;
+    state.nextMemoryItemId++;
+  }else if(result.returnedArtworkId){
+    state.returnedArtworkIds.push(result.returnedArtworkId);
+  }
+  state.pendingResonanceResult=null;
+  closeResonanceReveal();
+  renderInventory();
+  renderMemoryGrid();
+  updateShowcase();
+  updateHud();
+  updateHint();
+  flashHint(decision==='keep'
+    ? '这段艺术记忆已完整放入记忆空间。'
+    : '两件材料已经返还；本次消耗的记忆能量不会返还。');
+}
+
+dom.resonanceCard.addEventListener('pointerdown',event=>{
+  if(!state.pendingResonanceResult) return;
+  // 按钮和载体检视入口拥有自己的点击语义，不能被父卡片的拖拽捕获吞掉。
+  if(event.target.closest('#resonanceActions, #resonanceCarrier')) return;
+  resonanceDragging=true;
+  resonanceStartX=event.clientX;
+  resonanceDeltaX=0;
+  dom.resonanceCard.setPointerCapture(event.pointerId);
+});
+dom.resonanceCard.addEventListener('pointermove',event=>{
+  if(!resonanceDragging) return;
+  resonanceDeltaX=event.clientX-resonanceStartX;
+  const rotation=THREE.MathUtils.clamp(resonanceDeltaX*0.025,-9,9);
+  dom.resonanceCard.style.transform=`translateX(${resonanceDeltaX}px) rotate(${rotation}deg)`;
+  dom.resonanceCard.style.opacity=String(Math.max(0.5,1-Math.abs(resonanceDeltaX)/650));
+});
+function finishResonanceSwipe(event){
+  if(!resonanceDragging) return;
+  resonanceDragging=false;
+  if(event?.pointerId!==undefined && dom.resonanceCard.hasPointerCapture(event.pointerId)){
+    dom.resonanceCard.releasePointerCapture(event.pointerId);
+  }
+  if(resonanceDeltaX<=-120) finalizePendingResult('return');
+  else if(resonanceDeltaX>=120) finalizePendingResult('keep');
+  else{
+    dom.resonanceCard.style.transform='';
+    dom.resonanceCard.style.opacity='1';
+  }
+}
+dom.resonanceCard.addEventListener('pointerup',finishResonanceSwipe);
+dom.resonanceCard.addEventListener('pointercancel',finishResonanceSwipe);
+dom.returnMemory.addEventListener('click',()=>finalizePendingResult('return'));
+dom.keepMemory.addEventListener('click',()=>finalizePendingResult('keep'));
 
 /* ---- C6：唱片机播放（WebAudio 合成音 + 可见反馈） ---- */
 let audioCtx=null;
@@ -754,7 +1683,9 @@ function playRecord(){
   playing=true; state._spinBoost=1;
   dom.nowPlaying.style.display='block';
   const now = audioCtx.currentTime;
-  const melody = [261.6,329.6,392.0,523.2,392.0,329.6,440.0,392.0]; // 一段柔和小调
+  const musicItem=state.memoryItems.find(item=>getArtwork(item.artworkId)?.category==='音乐');
+  const melody=getArtwork(musicItem?.artworkId)?.audioPattern
+    || [261.6,329.6,392.0,523.2,392.0,329.6,440.0,392.0];
   const master = audioCtx.createGain(); master.gain.value=0.25; master.connect(audioCtx.destination);
   melody.forEach((f,i)=>{
     const o=audioCtx.createOscillator(); const g=audioCtx.createGain();
@@ -772,25 +1703,414 @@ function playRecord(){
 /* ============================================================
  * §K  物品栏 UI 渲染（C2/C5）
  * ========================================================== */
-const COLOR_HEX = k => assetConfig.colors[k] || '#cccccc';
+const COLOR_HEX = k => (typeof k==='string' && k.startsWith('#'))
+  ? k
+  : (assetConfig.colors[k] || '#cccccc');
 function renderInventory(){
   dom.invItems.innerHTML='';
   if(state.inventory.length===0){
-    dom.invItems.innerHTML = '<span class="empty">（空）夜晚回收供品后显示</span>';
+    dom.invItems.innerHTML = '<span class="empty">（空）夜晚回收上供材料</span>';
     return;
   }
   state.inventory.forEach(it=>{
     const el = document.createElement('div');
-    el.className = 'item' + (it.kind==='record'?' record':'') + (it===state.selectedMaterial?' sel':'');
-    el.innerHTML = `<span class="dot" style="background:${COLOR_HEX(it.color)}"></span>${it.label}${it.kind==='record'?' ♪':''}`;
+    el.className='item'+(state.selectedMaterialIds.includes(it.id)?' sel':'');
+    el.innerHTML=`<span class="dot" style="background:${COLOR_HEX(it.color)}"></span>${it.label}`;
     el.addEventListener('click', ()=>{
-      if(it.kind==='material'){
-        state.selectedMaterial = (state.selectedMaterial===it)?null:it;
-        renderInventory(); updateHint();
-      }
+      if(it.kind!=='material') return;
+      const selected=state.selectedMaterialIds.includes(it.id);
+      if(selected) state.selectedMaterialIds=state.selectedMaterialIds.filter(id=>id!==it.id);
+      else if(state.selectedMaterialIds.length<2) state.selectedMaterialIds.push(it.id);
+      else flashHint('每次共鸣只能选择两件材料；先取消一件再换。');
+      renderInventory(); updateHint();
     });
     dom.invItems.appendChild(el);
   });
+}
+
+/* ============================================================
+ * §K2  收藏品检视与展示柜
+ * ========================================================== */
+const inspectScene = new THREE.Scene();
+inspectScene.background = new THREE.Color(0x101718);
+const inspectCamera = new THREE.PerspectiveCamera(35,1,0.1,50);
+inspectCamera.position.set(0,0.15,5.2);
+inspectCamera.lookAt(0,0,0);
+const inspectRenderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+inspectRenderer.setPixelRatio(Math.min(devicePixelRatio,2));
+inspectRenderer.shadowMap.enabled=true;
+inspectRenderer.shadowMap.type=THREE.PCFSoftShadowMap;
+dom.inspectStage.appendChild(inspectRenderer.domElement);
+inspectScene.add(new THREE.HemisphereLight(0xdce8df,0x30403e,1.35));
+const inspectKey = new THREE.DirectionalLight(0xffdfb2,2.2);
+inspectKey.position.set(3,4,5);
+inspectScene.add(inspectKey);
+const inspectRim = new THREE.PointLight(0x7DB1AC,2.2,15);
+inspectRim.position.set(-4,1,-2);
+inspectScene.add(inspectRim);
+const inspectFloor = new THREE.Mesh(
+  new THREE.CircleGeometry(2.3,64),
+  new THREE.MeshPhongMaterial({ color:0x273533, transparent:true, opacity:0.62 })
+);
+inspectFloor.rotation.x=-Math.PI/2;
+inspectFloor.position.y=-1.68;
+inspectFloor.receiveShadow=true;
+inspectScene.add(inspectFloor);
+
+const inspectRoot = new THREE.Group();
+inspectScene.add(inspectRoot);
+let inspectedMemoryItem=null;
+let inspectDragging=false;
+let inspectMoved=false;
+let inspectLast={x:0,y:0};
+let inspectPinchDistance=null;
+const inspectPointers=new Map();
+
+function resizeInspector(){
+  const rect=dom.inspectStage.getBoundingClientRect();
+  if(rect.width<2 || rect.height<2) return;
+  inspectCamera.aspect=rect.width/rect.height;
+  inspectCamera.updateProjectionMatrix();
+  inspectRenderer.setSize(rect.width,rect.height,false);
+}
+window.addEventListener('resize',resizeInspector);
+
+function resetInspectView(){
+  inspectRoot.rotation.set(-0.08,0.3,0);
+  inspectCamera.position.set(0,0.15,5.2);
+  inspectCamera.lookAt(0,0,0);
+}
+
+function currentMemoryItem(id){
+  return state.memoryItems.find(item=>item.id===id)
+    || (state.pendingResonanceResult?.id===id ? state.pendingResonanceResult : null)
+    || null;
+}
+
+function openInspect(memoryItem){
+  const current=currentMemoryItem(memoryItem && memoryItem.id);
+  if(!current) return;
+  inspectedMemoryItem=current;
+  state.inspectOpen=true;
+  closeMemorySpace();
+  while(inspectRoot.children.length) inspectRoot.remove(inspectRoot.children[0]);
+  const model=makeCollectibleModel(current.carrierId,current);
+  model.scale.setScalar(current.carrierId==='carrier-seed-book'?0.9:1.02);
+  inspectRoot.add(model);
+  const carrier=getCarrier(current.carrierId);
+  const artwork=getArtwork(current.artworkId);
+  const materials=current.materialIds.map(getMaterial).filter(Boolean);
+  dom.inspectTitle.textContent=`${carrier?.label||'记忆藏品'} · ${artwork?.title||'未命名作品'}`;
+  dom.inspectMeta.textContent=`${artwork?.category||'艺术记忆'} · ${materials.map(item=>item.label).join(' × ')} · ${current.rarity==='formula-relic'?'配方奇珍':'常规载体'}`;
+  dom.inspectDisplay.textContent=current.displaySlot===null ? '选择展示位' : '移出展示柜';
+  dom.inspectDisplay.style.display=current.kind==='resonance-result'?'none':'inline-flex';
+  dom.inspectStatus.textContent=current.displaySlot===null
+    ? `${artwork?.summary||''} ${artwork?.perception||''}`
+    : `正在展示柜第 ${current.displaySlot+1} 位陈列。${artwork?.perception||''}`;
+  dom.inspect.style.display='flex';
+  dom.inspect.setAttribute('aria-hidden','false');
+  resetInspectView();
+  requestAnimationFrame(resizeInspector);
+}
+
+function closeInspect(){
+  state.inspectOpen=false;
+  inspectedMemoryItem=null;
+  inspectDragging=false;
+  inspectPointers.clear();
+  inspectPinchDistance=null;
+  dom.inspect.style.display='none';
+  dom.inspect.setAttribute('aria-hidden','true');
+  dom.inspectDisplay.style.display='inline-flex';
+  dom.inspectStage.classList.remove('dragging');
+}
+
+function beginShowcasePlacement(memoryItem){
+  if(!memoryItem || memoryItem.displaySlot!==null) return;
+  if(state.showcaseSlots.every(Boolean)){
+    dom.inspectStatus.textContent='展示柜的三个位置都已占用；请先从柜中打开一件藏品并移出展示柜。';
+    return;
+  }
+  state.pendingShowcaseMemoryItemId=memoryItem.id;
+  closeInspect();
+  updateHint();
+}
+
+function takeBackFromShowcase(memoryItem){
+  if(!memoryItem || memoryItem.displaySlot===null) return;
+  const result=removeFromShowcase({
+    memoryItems:state.memoryItems,
+    showcaseSlots:state.showcaseSlots,
+    memoryItemId:memoryItem.id,
+  });
+  if(!result.ok) return;
+  state.memoryItems=result.memoryItems;
+  state.showcaseSlots=result.showcaseSlots;
+  updateShowcase();
+  renderMemoryGrid();
+  openInspect(currentMemoryItem(memoryItem.id));
+}
+
+function onShowcaseSlotClick(slotIndex){
+  if(!requireSpiritNear(showcase,6.2)) return;
+  const displayedId=state.showcaseSlots[slotIndex];
+  if(displayedId){
+    openInspect(currentMemoryItem(displayedId));
+    return;
+  }
+  if(!state.pendingShowcaseMemoryItemId){
+    flashHint('展示位为空：先进入夜间记忆空间，打开一件藏品并选择展示位。');
+    return;
+  }
+  const result=assignShowcaseSlot({
+    memoryItems:state.memoryItems,
+    showcaseSlots:state.showcaseSlots,
+    memoryItemId:state.pendingShowcaseMemoryItemId,
+    slotIndex,
+  });
+  if(!result.ok){
+    state.pendingShowcaseMemoryItemId=null;
+    updateHint();
+    return;
+  }
+  const memoryItemId=state.pendingShowcaseMemoryItemId;
+  state.memoryItems=result.memoryItems;
+  state.showcaseSlots=result.showcaseSlots;
+  state.pendingShowcaseMemoryItemId=null;
+  updateShowcase();
+  renderMemoryGrid();
+  const artwork=getArtwork(currentMemoryItem(memoryItemId)?.artworkId);
+  flashHint(`已把${artwork?.title||'这件记忆藏品'}策展到第 ${slotIndex+1} 位；它仍保留在记忆空间。`);
+}
+
+function updateShowcase(){
+  showcaseSlots.forEach((slot,index)=>{
+    if(slot.userData.displayMesh){
+      slot.remove(slot.userData.displayMesh);
+      slot.userData.displayMesh=null;
+    }
+    const halo=slot.children.find(child=>child.geometry && child.geometry.type==='TorusGeometry');
+    const memoryItemId=state.showcaseSlots[index];
+    const memoryItem=currentMemoryItem(memoryItemId);
+    if(!memoryItem){
+      if(halo) halo.visible=true;
+      return;
+    }
+    if(halo) halo.visible=false;
+    const model=makeCollectibleModel(memoryItem.carrierId,memoryItem);
+    model.scale.setScalar(memoryItem.carrierId==='carrier-seed-book'?0.38:0.46);
+    model.position.y=0.05;
+    model.rotation.y=Math.PI;
+    model.userData.onClick=()=>onShowcaseSlotClick(index);
+    model.userData.memoryItemId=memoryItem.id;
+    slot.add(model);
+    slot.userData.displayMesh=model;
+  });
+}
+
+function flashHint(message){
+  dom.hint.innerHTML=`🗄️ ${message}`;
+  clearTimeout(flashHint._timer);
+  flashHint._timer=setTimeout(updateHint,1800);
+}
+
+dom.inspectClose.addEventListener('click',closeInspect);
+dom.inspectReset.addEventListener('click',resetInspectView);
+dom.inspectDisplay.addEventListener('click',()=>{
+  const memoryItem=inspectedMemoryItem && currentMemoryItem(inspectedMemoryItem.id);
+  if(!memoryItem) return;
+  if(memoryItem.displaySlot===null) beginShowcasePlacement(memoryItem);
+  else takeBackFromShowcase(memoryItem);
+});
+
+/* ---- 夜间记忆空间：逻辑容量不设上限，网格随收藏动态增长 ---- */
+function openMemorySpace(){
+  if(state.phase!=='NIGHT') return;
+  state.memorySpaceOpen=true;
+  state.pendingShowcaseMemoryItemId=null;
+  renderMemoryGrid();
+  dom.memorySpace.style.display='flex';
+  dom.memorySpace.setAttribute('aria-hidden','false');
+  dom.memorySpaceClose.focus();
+}
+
+function closeMemorySpace(){
+  state.memorySpaceOpen=false;
+  dom.memorySpace.style.display='none';
+  dom.memorySpace.setAttribute('aria-hidden','true');
+}
+
+function renderMemoryGrid(){
+  if(!dom.memoryGrid) return;
+  const filter=state.memoryFilter;
+  let items=state.memoryItems.filter(item=>{
+    if(filter==='all') return true;
+    if(filter==='displayed') return item.displaySlot!==null;
+    if(filter==='common' || filter==='formula-relic') return item.rarity===filter;
+    return getArtwork(item.artworkId)?.category===filter;
+  });
+  items=[...items].sort((a,b)=>{
+    if(state.memorySort==='oldest') return (a.keptOrder||0)-(b.keptOrder||0);
+    if(state.memorySort==='title'){
+      return (getArtwork(a.artworkId)?.title||'').localeCompare(getArtwork(b.artworkId)?.title||'','zh-CN');
+    }
+    return (b.keptOrder||0)-(a.keptOrder||0);
+  });
+  dom.memoryGrid.innerHTML='';
+  dom.memoryCount.textContent=`${items.length} / ${state.memoryItems.length} 件`;
+  dom.memoryEmpty.style.display=items.length?'none':'block';
+  items.forEach(item=>{
+    const carrier=getCarrier(item.carrierId);
+    const artwork=getArtwork(item.artworkId);
+    const card=document.createElement('button');
+    card.type='button';
+    card.className='memory-slot';
+    card.style.setProperty('--slot-accent',artwork?.accent||'#7DB1AC');
+    card.innerHTML=`
+      <span class="memory-thumb" aria-hidden="true">
+        <span class="memory-badge">${item.rarity==='formula-relic'?'奇珍':'常规'}</span>
+      </span>
+      <span class="memory-copy">
+        <strong>${artwork?.title||'未命名作品'}</strong>
+        <span>${artwork?.category||'艺术记忆'} · ${carrier?.label||'无名记忆匣'}${item.displaySlot!==null?` · 展示位 ${item.displaySlot+1}`:''}</span>
+      </span>`;
+    card.addEventListener('click',()=>openInspect(item));
+    dom.memoryGrid.appendChild(card);
+  });
+}
+
+dom.memorySpaceBtn.addEventListener('click',openMemorySpace);
+dom.memorySpaceClose.addEventListener('click',closeMemorySpace);
+dom.memoryFilter.addEventListener('change',()=>{
+  state.memoryFilter=dom.memoryFilter.value;
+  renderMemoryGrid();
+});
+dom.memorySort.addEventListener('change',()=>{
+  state.memorySort=dom.memorySort.value;
+  renderMemoryGrid();
+});
+dom.resonanceCarrier.addEventListener('click',()=>{
+  if(state.pendingResonanceResult) openInspect(state.pendingResonanceResult);
+});
+dom.resonanceCarrier.addEventListener('keydown',event=>{
+  if((event.key==='Enter' || event.key===' ') && state.pendingResonanceResult){
+    event.preventDefault();
+    openInspect(state.pendingResonanceResult);
+  }
+});
+document.addEventListener('keydown',event=>{
+  const isDirectionKey=
+    event.code==='ArrowUp' || event.code==='ArrowLeft'
+    || event.code==='ArrowDown' || event.code==='ArrowRight';
+  const targetIsEditable=
+    event.target.tagName==='INPUT'
+    || event.target.tagName==='TEXTAREA'
+    || event.target.isContentEditable;
+  if(event.key==='Escape' && state.inspectOpen){
+    closeInspect();
+    return;
+  }
+  if(event.key==='Escape' && state.memorySpaceOpen){
+    closeMemorySpace();
+    return;
+  }
+  if(targetIsEditable) return;
+  if(state.inspectOpen || state.memorySpaceOpen || state.dialogueOpen){
+    if(isDirectionKey) event.preventDefault();
+    return;
+  }
+  if(state.pendingResonanceResult && event.key==='ArrowLeft'){
+    event.preventDefault();
+    finalizePendingResult('return');
+  }else if(state.pendingResonanceResult && event.key==='ArrowRight'){
+    event.preventDefault();
+    finalizePendingResult('keep');
+  }else if(
+    state.phase==='NIGHT'
+    && !worldInputBlocked()
+    && event.target.tagName!=='INPUT'
+    && (
+      event.code==='KeyW' || event.code==='KeyA'
+      || event.code==='KeyS' || event.code==='KeyD'
+      || event.code==='ArrowUp' || event.code==='ArrowLeft'
+      || event.code==='ArrowDown' || event.code==='ArrowRight'
+    )
+  ){
+    event.preventDefault();
+    state.movementKeys.add(event.code);
+    state.moveTarget=null;
+  }
+});
+document.addEventListener('keyup',event=>{
+  state.movementKeys.delete(event.code);
+});
+
+function pointerDistance(){
+  const points=[...inspectPointers.values()];
+  if(points.length<2) return null;
+  return Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y);
+}
+dom.inspectStage.addEventListener('pointerdown',event=>{
+  if(!state.inspectOpen) return;
+  inspectPointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+  dom.inspectStage.setPointerCapture(event.pointerId);
+  inspectDragging=true;
+  inspectMoved=false;
+  inspectLast={x:event.clientX,y:event.clientY};
+  inspectPinchDistance=pointerDistance();
+  dom.inspectStage.classList.add('dragging');
+});
+dom.inspectStage.addEventListener('pointermove',event=>{
+  if(!inspectPointers.has(event.pointerId)) return;
+  inspectPointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+  if(inspectPointers.size>=2){
+    const distance=pointerDistance();
+    if(inspectPinchDistance && distance){
+      inspectCamera.position.z=THREE.MathUtils.clamp(
+        inspectCamera.position.z-(distance-inspectPinchDistance)*0.012,
+        3.1,
+        8
+      );
+    }
+    inspectPinchDistance=distance;
+    inspectMoved=true;
+    return;
+  }
+  const dx=event.clientX-inspectLast.x;
+  const dy=event.clientY-inspectLast.y;
+  if(Math.abs(dx)+Math.abs(dy)>1) inspectMoved=true;
+  inspectRoot.rotation.y+=dx*0.012;
+  inspectRoot.rotation.x=THREE.MathUtils.clamp(inspectRoot.rotation.x+dy*0.01,-1.35,1.35);
+  inspectLast={x:event.clientX,y:event.clientY};
+});
+function endInspectPointer(event){
+  inspectPointers.delete(event.pointerId);
+  if(inspectPointers.size===0){
+    inspectDragging=false;
+    inspectPinchDistance=null;
+    dom.inspectStage.classList.remove('dragging');
+  }else{
+    const remaining=[...inspectPointers.values()][0];
+    inspectLast={x:remaining.x,y:remaining.y};
+    inspectPinchDistance=pointerDistance();
+  }
+}
+dom.inspectStage.addEventListener('pointerup',endInspectPointer);
+dom.inspectStage.addEventListener('pointercancel',endInspectPointer);
+dom.inspectStage.addEventListener('wheel',event=>{
+  if(!state.inspectOpen) return;
+  event.preventDefault();
+  inspectCamera.position.z=THREE.MathUtils.clamp(
+    inspectCamera.position.z+event.deltaY*0.004,
+    3.1,
+    8
+  );
+},{passive:false});
+
+function updateInspector(dtReal){
+  if(!state.inspectOpen) return;
+  if(!inspectDragging) inspectRoot.rotation.y+=dtReal*0.28;
+  inspectRenderer.render(inspectScene,inspectCamera);
 }
 
 /* ============================================================
@@ -820,7 +2140,7 @@ const ray = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 function findClickable(obj){ while(obj){ if(obj.userData && obj.userData.onClick) return obj; obj=obj.parent; } return null; }
 renderer.domElement.addEventListener('pointerdown', e=>{
-  if(state.dialogueOpen) return;            // 对话中不响应世界点击
+  if(state.dialogueOpen || state.inspectOpen || state.memorySpaceOpen || state.pendingResonanceResult) return;
   if(dom.intro.style.display!=='none') return;
   pointer.x = (e.clientX/innerWidth)*2-1;
   pointer.y = -(e.clientY/innerHeight)*2+1;
@@ -828,7 +2148,12 @@ renderer.domElement.addEventListener('pointerdown', e=>{
   const hits = ray.intersectObjects(scene.children, true);
   for(const h of hits){
     const t = findClickable(h.object);
-    if(t){ t.userData.onClick(); break; }
+    if(t){ t.userData.onClick(); return; }
+  }
+  if(state.phase==='NIGHT' && state.spirit){
+    const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+    const target=new THREE.Vector3();
+    if(ray.ray.intersectPlane(groundPlane,target)) setSpiritMoveTarget(target);
   }
 });
 
@@ -841,24 +2166,37 @@ function updateHud(){
   dom.phaseChip.textContent = isDay?'☀️ 白天':'🌙 夜晚';
   dom.phaseChip.className = 'chip ' + (isDay?'day':'night');
   dom.dayChip.textContent = `第 ${state.day} 天`;
+  dom.energyChip.textContent = `✦ 记忆能量 ${state.memoryEnergy}`;
+  const currentRoom=ROOMS[state.activeRoomId] || ROOMS.prayer;
+  dom.roomChip.textContent=isDay
+    ? `${currentDayViewpoint().label} · ${currentRoom.label}`
+    : `灵体 · ${currentRoom.label}`;
   if(isDay){ dom.clockChip.style.display=''; dom.clockChip.textContent = `剩余 ${fmt(TUNING.DAY_WINDOW-state.dayElapsed)}`; }
   else dom.clockChip.style.display='none';
+  dom.viewDock.style.display=isDay?'flex':'none';
+  dom.movementHelp.style.display=isDay?'none':'block';
+  dom.memorySpaceBtn.style.display=isDay?'none':'inline-flex';
   dom.actionBtn.textContent = isDay ? '⏭ 跳过白天' : `🌅 进入第 ${state.day+1} 天`;
 }
 function updateHint(){
   let h='';
+  if(state.pendingShowcaseMemoryItemId){
+    h='🗄️ <b>陈列模式</b>：走到陈列室并靠近展示柜，再点击任意空位。已占用的位置会打开收藏品检视。';
+    dom.hint.innerHTML=h;
+    return;
+  }
   if(state.phase==='DAY'){
-    h = '☀️ <b>白天</b>：上贡者成群而来。<b>点击上贡者</b> → 供品入绿色区 + 拉近对话；不点也会自动留供。倍速可加速，或按 <b>⏭ 跳过白天</b> 进入夜晚。';
+    h = `☀️ <b>${currentDayViewpoint().label}</b>：左上切换具身视角；回到神像点击上供者并提交一条<b>非空回应</b>，获得 1 点记忆能量。`;
   } else {
-    if(!state.spirit) h='🌙 <b>夜晚</b>：先<b>点击神像</b>化为灵体（可选），';
-    else h='🌙 <b>夜晚</b>：';
-    if(state.offerings.length>0) h+=`<b>点击绿色区供品</b>或<b>点击宠物</b>回收（剩 ${state.offerings.length} 件）。`;
-    else if(state.processing) h+='面包机加工中，请等待进度条…';
-    else if(recordPickup) h+='<b>点击漂浮的唱片</b>拾取入物品栏。';
-    else if(state.petForm==='dog') h+='供品已回收。<b>点击宠物（狗）</b> → 变面包机。';
-    else if(state.petForm==='toaster' && !state.hasRecord) h+='在物品栏<b>选一件材料</b> → <b>点击面包机</b>投料（约50s 出唱片）。';
-    else if(state.petForm==='toaster' && state.hasRecord) h+='已有唱片。<b>点击面包机</b> → 变唱片机。';
-    else if(state.petForm==='player') h+='<b>点击唱片机</b>播放唱片（有声）。完成后按 <b>🌅 进入第N天</b>。';
+    h=`🌙 <b>${ROOMS[state.activeRoomId].label}</b>：`;
+    if(state.offerings.length>0) h+=`用 WASD／方向键或点击地面走到祈愿厅，靠近并<b>点击供品</b>回收（剩 ${state.offerings.length} 件）。`;
+    else if(state.pendingResonanceResult) h+='当前艺术记忆等待你的决定：向左归还材料，向右珍藏进入记忆空间。';
+    else if(state.processing) h+='共鸣装置工作中，请等待进度条…';
+    else if(state.petForm==='dog') h+='供品已回收。走到处理室靠近并<b>点击宠物（狗）</b> → 变共鸣装置。';
+    else if(state.petForm==='toaster' && state.selectedMaterialIds.length===2 && state.memoryEnergy<RULES.resonanceEnergyCost) h+='已选两件材料，但<b>记忆能量不足</b>；进入下一天与上供者对话获得能量。';
+    else if(state.petForm==='toaster' && state.selectedMaterialIds.length===2) h+='材料和能量已备齐，<b>点击共鸣装置</b>唤回承载艺术品的记忆藏品。';
+    else if(state.petForm==='toaster') h+=`在材料栏选择<b>两件材料</b>（已选 ${state.selectedMaterialIds.length}/2），靠近并点击共鸣装置；右上角可打开记忆空间。`;
+    else if(state.petForm==='player') h+='<b>点击唱片机</b>播放已珍藏的音乐记忆（有声）；完整藏品仍保留在记忆空间。';
     h+=' ';
   }
   dom.hint.innerHTML = h;
@@ -878,10 +2216,12 @@ function animate(now){
   // 门开合动画
   door.position.y += (doorTarget - door.position.y) * Math.min(dtReal*3,1);
 
+  if(state.phase==='NIGHT') updateSpiritMovement(dtReal);
+
   // 镜头
   if(state.camAnim) updateCamera(dtReal);
-  else if(state.phase==='DAY' && !state.dialogueOpen){ camera.position.copy(CAM_HOME.pos); state.curLook.copy(CAM_HOME.look); camera.lookAt(state.curLook); }
-  // 对话打开时镜头保持在脚本特写位（不复位），关闭后由 flyCamera 归位
+  else if(state.phase==='NIGHT') updateSpiritCamera(dtReal);
+  // 白天保持当前具身锚点；对话特写关闭后回到该锚点。
 
   if(state.phase==='DAY' && dom.intro.style.display==='none'){
     // 白天计时（A3：窗口耗尽自动结束）
@@ -902,20 +2242,28 @@ function animate(now){
       const k = Math.min(state.processing.elapsed/state.processing.duration,1);
       dom.bar.style.width = (k*100).toFixed(1)+'%';
       // 面包机加工时轻微抖动反馈
-      pet.position.x = 3.2 + Math.sin(now*0.03)*0.04;
+      pet.position.x = PET_HOME.x + Math.sin(now*0.03)*0.04;
       if(k>=1) finishProcessing();
-    }
-    // 唱片拾取漂浮
-    if(recordPickup){ state._recordFloat+=dtReal; recordPickup.position.y = pet.position.y+1.9+Math.sin(state._recordFloat*2)*0.12; recordPickup.rotation.y+=dtReal*1.2; }
+    }else pet.position.x += (PET_HOME.x-pet.position.x)*Math.min(dtReal*8,1);
     // 唱片机转盘旋转（播放时加速 = 可见反馈）
     if(state.petForm==='player'){ pPlatter.rotation.y += dtReal*(playing?9:1.2); }
-    // 灵体轻微浮动
-    if(state.spirit){ statue.position.y = Math.sin(now*0.002)*0.12; } else statue.position.y=0;
+    for(const slot of showcaseSlots){
+      if(slot.userData.displayMesh){
+        slot.userData.displayMesh.rotation.y=Math.PI+Math.sin(now*0.0007+slot.userData.slotIndex)*0.22;
+      }
+    }
+    // 独立灵体轻微浮动，石像留在原位
+    if(state.spirit){
+      spiritAvatar.position.y=0.12+Math.sin(now*0.002)*0.1;
+      const halo=spiritAvatar.children[2];
+      if(halo) halo.rotation.z+=dtReal*0.65;
+    }
   }
 
   // 宠物（狗）尾巴摆动（白天趴着也活泼）
   if(state.petForm==='dog'){ dTail.rotation.z = 0.6 + Math.sin(now*0.012)*0.4; }
 
+  updateInspector(dtReal);
   renderer.render(scene, camera);
 }
 
@@ -923,7 +2271,9 @@ function animate(now){
  * §P  启动
  * ========================================================== */
 state.nextSpawnIn=0; state.spawnTimer=0;
+setDayView('statue',true);
 renderInventory(); updateHud(); updateHint();
+updateShowcase();
 requestAnimationFrame(animate);
 </script>
 </body>

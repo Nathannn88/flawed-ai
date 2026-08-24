@@ -9,7 +9,7 @@
     "core": {"dir": "design/00-项目核心", "role": "最高权威与项目总原则"},
     "system": {"dir": "design/10-玩法与系统", "role": "核心循环、机制、数值、商业与社群"},
     "story": {"dir": "design/20-世界观与剧情", "role": "世界观、剧情、事件与叙事"},
-    "character": {"dir": "design/30-角色设定", "role": "诗人、宠物、上贡者及关系"},
+    "character": {"dir": "design/30-角色设定", "role": "诗人、宠物、上供者及关系"},
     "art_assets": {
       "dir": "design/40-美术素材",
       "index": "design/40-美术素材/素材索引.md",
@@ -28,8 +28,8 @@
     "system": ["story", "character", "art_assets", "visual"],
     "story": ["character", "system", "art_assets", "visual"],
     "character": ["story", "system", "art_assets", "visual"],
-    "art_assets": ["visual", "project_runtime_assets"],
-    "visual": ["art_assets", "project_runtime_assets"],
+    "art_assets": ["visual", "active_runtime_assets"],
+    "visual": ["art_assets", "active_runtime_assets"],
     "legal_records": []
   },
   "records": {
@@ -38,16 +38,17 @@
     "sources": "记录/源文件索引.md"
   },
   "legal_dir": "法律文件",
-  "runtime_asset_targets": ["project/public/assets", "project/src/assets"],
+  "active_implementation": "prototype/temple-mvp",
+  "active_runtime_asset_target": "prototype/temple-mvp/assets",
+  "future_runtime_asset_targets": ["project/public/assets", "project/src/assets"],
+  "visual_acceptance_spec": "prototype/temple-mvp/视觉与交互验收规范.md",
   "rules": [
     "AGENTS.md",
     "CLAUDE.md",
     "design/AGENTS.md",
     "design/CLAUDE.md",
     "project/AGENTS.md",
-    "project/CLAUDE.md",
-    "project/v1-archive/AGENTS.md",
-    "project/v1-archive/CLAUDE.md"
+    "project/CLAUDE.md"
   ],
   "retired_artifacts": {
     "deleted_on": "2026-07-30",
@@ -62,7 +63,7 @@
     "记录/决策与活动日志.md",
     "需求快照/",
     "design/99-待删除审核/",
-    "project/v1-archive/",
+    "记录/v1归档/",
     ".claude/plans/"
   ],
   "commit": {
@@ -73,6 +74,10 @@
   },
   "verification": {
     "risk_adaptive": true,
+    "real_browser_for_runtime_visual_changes": true,
+    "screenshots_required": true,
+    "recording_or_sequence_for_dynamic_changes": true,
+    "blocked_if_visual_runtime_unavailable": true,
     "max_reviewers": 1,
     "max_targeted_recheck": 1,
     "stop_after_clean_round": true
